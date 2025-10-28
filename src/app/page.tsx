@@ -2,9 +2,21 @@
 
 import Link from 'next/link';
 import { useWallet } from '@/hooks/useWallet';
+import { useState } from 'react';
 
 export default function Home() {
   const { address, connect } = useWallet();
+  const [error, setError] = useState('');
+
+  const handleConnect = async () => {
+    try {
+      setError('');
+      await connect();
+    } catch (err: any) {
+      setError(err.message || 'Failed to connect wallet');
+      alert(err.message || 'Failed to connect wallet');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black text-white">
@@ -20,15 +32,18 @@ export default function Home() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
           {address ? (
-            <Link href="/dashboard" className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xl font-bold">
+            <Link href="/dashboard" className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xl font-bold hover:scale-105 transition-transform">
               Enter Game
             </Link>
           ) : (
-            <button onClick={connect} className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xl font-bold">
+            <button onClick={handleConnect} className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xl font-bold hover:scale-105 transition-transform">
               Connect Wallet
             </button>
           )}
         </div>
+        {error && (
+          <p className="mt-4 text-red-400">{error}</p>
+        )}
       </div>
     </div>
   );
