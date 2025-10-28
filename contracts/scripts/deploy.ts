@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+const { ethers } = require("hardhat");
 
 async function main() {
   console.log("🚀 Deploying Aeloria Contracts to Ronin Network...\n");
