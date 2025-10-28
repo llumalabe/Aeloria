@@ -30,11 +30,28 @@ export const useWallet = create<WalletState>((set) => ({
 
   connect: async () => {
     try {
-      // Support both Ronin Wallet and MetaMask
-      const provider = window.ronin?.provider || window.ethereum;
+      // Check for wallet providers in order of preference
+      let provider = null;
+      
+      // 1. Check Ronin Wallet (Desktop & Mobile)
+      if (window.ronin?.provider) {
+        provider = window.ronin.provider;
+        console.log('Using Ronin Wallet');
+      }
+      // 2. Check MetaMask or other injected wallets
+      else if (window.ethereum) {
+        provider = window.ethereum;
+        console.log('Using injected wallet (MetaMask/etc)');
+      }
       
       if (!provider) {
-        throw new Error('Please install Ronin Wallet or MetaMask');
+        // Detect mobile and provide specific instructions
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+          throw new Error('Please open this page in Ronin Wallet or MetaMask app browser');
+        } else {
+          throw new Error('Please install Ronin Wallet or MetaMask extension');
+        }
       }
 
       const ethersProvider = new ethers.BrowserProvider(provider);
