@@ -21,7 +21,7 @@ export const useWallet = create<WalletState>((set) => ({
   connect: async () => {
     try {
       if (typeof window.ethereum === 'undefined') {
-        throw new Error('Please install Ronin Wallet');
+        throw new Error('Please install MetaMask or Ronin Wallet');
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);

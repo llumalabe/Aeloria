@@ -30,6 +30,11 @@ export default function Home() {
         <p className="text-lg md:text-xl text-center mb-12 text-gray-300 max-w-2xl">
           Embark on an epic Web3 adventure on the Ronin Network.
         </p>
+        {!address && (
+          <p className="text-sm text-gray-400 mb-4">
+            📱 Mobile: Use MetaMask app browser | 💻 PC: Install MetaMask extension
+          </p>
+        )}
         <div className="flex flex-col sm:flex-row gap-4">
           {address ? (
             <Link href="/dashboard" className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-xl font-bold hover:scale-105 transition-transform">
