@@ -82,11 +82,16 @@ router.post('/register', async (req, res) => {
       stack: error.stack
     });
     
+    // Detailed error response
     res.status(500).json({ 
       success: false, 
-      error: error.message,
+      error: error.message || 'Unknown error occurred',
       errorName: error.name,
-      errorCode: error.code
+      errorCode: error.code,
+      details: process.env.NODE_ENV === 'production' ? undefined : {
+        stack: error.stack,
+        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
+      }
     });
   }
 });
