@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useWallet } from '@/hooks/useWallet';
+import { useWallet, type WalletType } from '@/hooks/useWallet';
 import { useState, useEffect } from 'react';
 
 export default function Header() {
@@ -9,6 +9,7 @@ export default function Header() {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,12 +19,14 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleConnectWallet = async (walletType: 'ronin' | 'metamask' | 'walletconnect') => {
+  const handleConnectWallet = async (walletType: WalletType) => {
     try {
-      await connect();
+      setError('');
+      await connect(walletType);
       setShowWalletModal(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to connect:', error);
+      setError(error.message || 'Failed to connect wallet');
     }
   };
 
@@ -61,44 +64,48 @@ export default function Header() {
               {address ? (
                 // Logged In Menu
                 <>
-                  <Link 
-                    href="/dashboard" 
+                  <Link
+                    href="/dashboard"
                     className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
                   >
                     Home
                   </Link>
-                  <Link 
-                    href="/characters" 
+                  <Link
+                    href="/town"
                     className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
                   >
                     Town
                   </Link>
-                  <Link 
-                    href="/marketplace" 
+                  <Link
+                    href="/shop"
                     className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
                   >
                     Shop
                   </Link>
-                  <Link 
-                    href="/dungeon" 
+                  <Link
+                    href="/marketplace"
+                    className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
+                  >
+                    Marketplace
+                  </Link>
+                  <Link
+                    href="/crafting"
                     className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
                   >
                     Crafting
                   </Link>
-                  <Link 
-                    href="/gacha" 
+                  <Link
+                    href="/rewards"
                     className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
                   >
                     Rewards
                   </Link>
-                  <Link 
-                    href="/pvp" 
+                  <Link
+                    href="/ranking"
                     className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
                   >
                     Ranking
-                  </Link>
-
-                  {/* Wallet Dropdown */}
+                  </Link>                  {/* Wallet Dropdown */}
                   <div className="relative">
                     <button
                       onClick={() => setShowAccountDropdown(!showAccountDropdown)}
@@ -185,10 +192,10 @@ export default function Header() {
               </button>
 
               <p className="text-sm text-gray-400 mt-6 mb-2">Recent</p>
-
+              
               {/* Ronin Waypoint */}
               <button
-                onClick={() => handleConnectWallet('ronin')}
+                onClick={() => handleConnectWallet('ronin-waypoint')}
                 className="w-full bg-gray-800 hover:bg-gray-700 border-2 border-gray-600 hover:border-yellow-500 rounded-lg p-4 flex items-center gap-4 transition-all group"
               >
                 <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-2xl">
@@ -227,9 +234,13 @@ export default function Header() {
                   <p className="text-xs text-gray-400">Scan with your mobile wallet</p>
                 </div>
               </button>
-            </div>
-
-            <p className="text-xs text-gray-500 text-center mt-6">
+              
+              {error && (
+                <div className="mt-4 p-3 bg-red-900/50 border border-red-500 rounded-lg">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+            </div>            <p className="text-xs text-gray-500 text-center mt-6">
               By connecting, you agree to our Terms of Service
             </p>
           </div>

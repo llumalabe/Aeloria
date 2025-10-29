@@ -11,13 +11,16 @@ declare global {
   }
 }
 
+export type WalletType = 'ronin' | 'ronin-waypoint' | 'metamask' | 'walletconnect';
+
 interface WalletState {
   address: string | null;
   isConnected: boolean;
   provider: ethers.BrowserProvider | null;
   signer: ethers.Signer | null;
   chainId: number | null;
-  connect: () => Promise<void>;
+  walletType: WalletType | null;
+  connect: (walletType?: WalletType) => Promise<void>;
   disconnect: () => void;
 }
 
@@ -27,25 +30,49 @@ export const useWallet = create<WalletState>((set) => ({
   provider: null,
   signer: null,
   chainId: null,
+  walletType: null,
 
-  connect: async () => {
+  connect: async (walletType?: WalletType) => {
     try {
-      // Check for wallet providers in order of preference
       let provider = null;
-      
-      // 1. Check Ronin Wallet (Desktop & Mobile)
-      if (window.ronin?.provider) {
-        provider = window.ronin.provider;
-        console.log('Using Ronin Wallet');
+      let selectedWalletType: WalletType | null = null;
+
+      // Connect based on specified wallet type
+      if (walletType === 'ronin' || walletType === 'ronin-waypoint') {
+        // Ronin Wallet or Ronin Waypoint
+        if (window.ronin?.provider) {
+          provider = window.ronin.provider;
+          selectedWalletType = walletType;
+          console.log(`Using ${walletType === 'ronin' ? 'Ronin Wallet' : 'Ronin Waypoint'}`);
+        } else {
+          throw new Error('Ronin Wallet is not installed. Please install Ronin Wallet extension.');
+        }
+      } else if (walletType === 'metamask') {
+        // MetaMask
+        if (window.ethereum && window.ethereum.isMetaMask) {
+          provider = window.ethereum;
+          selectedWalletType = 'metamask';
+          console.log('Using MetaMask');
+        } else {
+          throw new Error('MetaMask is not installed. Please install MetaMask extension.');
+        }
+      } else if (walletType === 'walletconnect') {
+        // WalletConnect - will be implemented with WalletConnect SDK
+        throw new Error('WalletConnect support coming soon!');
+      } else {
+        // Auto-detect wallet (backward compatibility)
+        if (window.ronin?.provider) {
+          provider = window.ronin.provider;
+          selectedWalletType = 'ronin';
+          console.log('Using Ronin Wallet');
+        } else if (window.ethereum) {
+          provider = window.ethereum;
+          selectedWalletType = 'metamask';
+          console.log('Using MetaMask');
+        }
       }
-      // 2. Check MetaMask or other injected wallets
-      else if (window.ethereum) {
-        provider = window.ethereum;
-        console.log('Using injected wallet (MetaMask/etc)');
-      }
-      
+
       if (!provider) {
-        // Detect mobile and provide specific instructions
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
           throw new Error('Please open this page in Ronin Wallet or MetaMask app browser');
@@ -65,9 +92,10 @@ export const useWallet = create<WalletState>((set) => ({
         provider: ethersProvider,
         signer,
         chainId: Number(network.chainId),
+        walletType: selectedWalletType,
       });
 
-      // Listen for account changes (both Ronin and MetaMask)
+      // Listen for account changes
       const activeProvider = window.ronin?.provider || window.ethereum;
       if (activeProvider?.on) {
         activeProvider.on('accountsChanged', (accounts: string[]) => {
@@ -78,13 +106,13 @@ export const useWallet = create<WalletState>((set) => ({
               provider: null,
               signer: null,
               chainId: null,
+              walletType: null,
             });
           } else {
             set({ address: accounts[0] });
           }
         });
 
-        // Listen for chain changes
         activeProvider.on('chainChanged', () => {
           window.location.reload();
         });
@@ -93,15 +121,14 @@ export const useWallet = create<WalletState>((set) => ({
       console.error('Failed to connect wallet:', error);
       throw error;
     }
-  },
-
-  disconnect: () => {
+  },  disconnect: () => {
     set({
       address: null,
       isConnected: false,
       provider: null,
       signer: null,
       chainId: null,
+      walletType: null,
     });
   },
 }));
