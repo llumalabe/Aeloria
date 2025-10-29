@@ -12,23 +12,42 @@ const getWarriorStats = () => {
 // POST /api/users/register - Register new user
 router.post('/register', async (req, res) => {
   try {
+    console.log('📝 Registration request received:', req.body);
+    
     const { walletAddress, username } = req.body;
 
+    // Validate walletAddress
+    if (!walletAddress) {
+      console.error('❌ Missing walletAddress');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Wallet address is required' 
+      });
+    }
+
     const normalizedAddress = walletAddress.toLowerCase();
+    console.log('🔍 Normalized address:', normalizedAddress);
 
     // Check if user exists
     const existingUser = await User.findOne({ walletAddress: normalizedAddress });
     if (existingUser) {
+      console.log('⚠️ User already exists:', normalizedAddress);
       return res.status(400).json({ success: false, error: 'User already exists' });
     }
+
+    // Generate default username if not provided
+    const finalUsername = username || `Player_${normalizedAddress.slice(2, 8)}`;
+    console.log('👤 Username to use:', finalUsername);
 
     // Create new user
     const user = new User({
       walletAddress: normalizedAddress,
-      username,
+      username: finalUsername,
     });
 
+    console.log('💾 Saving user to database...');
     await user.save();
+    console.log('✅ User saved successfully');
 
     // Auto-create starter Warrior character
     const starterStats = getWarriorStats();
@@ -44,7 +63,9 @@ router.post('/register', async (req, res) => {
       tokenId: null,
     });
 
+    console.log('⚔️ Creating starter character...');
     await starterCharacter.save();
+    console.log('✅ Starter character created');
 
     res.json({ 
       success: true, 
@@ -53,7 +74,20 @@ router.post('/register', async (req, res) => {
       message: 'User registered with starter character'
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('💥 Registration error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      code: error.code,
+      stack: error.stack
+    });
+    
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      errorName: error.name,
+      errorCode: error.code
+    });
   }
 });
 
