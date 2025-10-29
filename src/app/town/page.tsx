@@ -1,12 +1,14 @@
 'use client';
 
 import { useWallet } from '@/hooks/useWallet';
+import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function TownPage() {
   const { address } = useWallet();
+  const { userData, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -19,13 +21,60 @@ export default function TownPage() {
     return null;
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-bounce">⏳</div>
+          <p className="text-xl text-gray-300">Loading your town...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-black">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-5xl font-bold text-center mb-12 text-yellow-400">
+        <h1 className="text-5xl font-bold text-center mb-8 text-yellow-400">
           🏰 Town of Aeloria
         </h1>
 
+        {/* User Info Card */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="bg-gradient-to-r from-purple-900/80 to-indigo-900/80 border-2 border-yellow-500/50 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-white">{userData?.username || 'Adventurer'}</h2>
+                <p className="text-sm text-gray-400">{address?.slice(0, 6)}...{address?.slice(-4)}</p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-yellow-400">Lv. {userData?.level || 1}</div>
+                <p className="text-sm text-gray-400">Total Power: {userData?.totalPower || 0}</p>
+              </div>
+            </div>
+
+            {/* Currency Display */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-black/30 rounded-lg p-4 text-center">
+                <div className="text-3xl mb-1">🪙</div>
+                <div className="text-2xl font-bold text-yellow-400">{userData?.gold?.toLocaleString() || 0}</div>
+                <div className="text-xs text-gray-400">Gold</div>
+              </div>
+              <div className="bg-black/30 rounded-lg p-4 text-center">
+                <div className="text-3xl mb-1">💎</div>
+                <div className="text-2xl font-bold text-purple-400">{userData?.premiumCurrency || 0}</div>
+                <div className="text-xs text-gray-400">Premium</div>
+              </div>
+              <div className="bg-black/30 rounded-lg p-4 text-center">
+                <div className="text-3xl mb-1">🔮</div>
+                <div className="text-2xl font-bold text-blue-400">{userData?.tokenBalance || 0}</div>
+                <div className="text-xs text-gray-400">AETH Token</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Town Features */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {/* Characters */}
           <Link

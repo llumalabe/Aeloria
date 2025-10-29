@@ -65,7 +65,7 @@ export default function Header() {
                 // Logged In Menu
                 <>
                   <Link
-                    href="/dashboard"
+                    href="/"
                     className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
                   >
                     Home
