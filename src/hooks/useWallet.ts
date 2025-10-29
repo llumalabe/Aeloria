@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { ethers } from 'ethers';
 
 // Extend Window interface for Ronin Wallet
@@ -22,12 +23,15 @@ interface WalletState {
   walletType: WalletType | null;
   connect: (walletType?: WalletType) => Promise<void>;
   disconnect: () => void;
+  reconnect: () => Promise<void>;
 }
 
-export const useWallet = create<WalletState>((set) => ({
-  address: null,
-  isConnected: false,
-  provider: null,
+export const useWallet = create<WalletState>()(
+  persist(
+    (set, get) => ({
+      address: null,
+      isConnected: false,
+      provider: null,
   signer: null,
   chainId: null,
   walletType: null,
@@ -131,4 +135,68 @@ export const useWallet = create<WalletState>((set) => ({
       walletType: null,
     });
   },
-}));
+
+  reconnect: async () => {
+    const state = get();
+    if (state.walletType && state.address) {
+      try {
+        let provider = null;
+        
+        // Get the provider based on stored wallet type
+        if (state.walletType === 'ronin' || state.walletType === 'ronin-waypoint') {
+          if (window.ronin?.provider) {
+            provider = window.ronin.provider;
+          }
+        } else if (state.walletType === 'metamask') {
+          if (window.ethereum && window.ethereum.isMetaMask) {
+            provider = window.ethereum;
+          }
+        }
+
+        if (!provider) {
+          throw new Error('Wallet provider not found');
+        }
+
+        const ethersProvider = new ethers.BrowserProvider(provider);
+        const accounts = await ethersProvider.send('eth_accounts', []); // Use eth_accounts to avoid popup
+        
+        if (accounts.length === 0) {
+          throw new Error('No connected accounts');
+        }
+
+        const signer = await ethersProvider.getSigner();
+        const network = await ethersProvider.getNetwork();
+
+        set({
+          address: accounts[0],
+          isConnected: true,
+          provider: ethersProvider,
+          signer,
+          chainId: Number(network.chainId),
+        });
+      } catch (error) {
+        console.error('Failed to reconnect:', error);
+        set({
+          address: null,
+          isConnected: false,
+          provider: null,
+          signer: null,
+          chainId: null,
+          walletType: null,
+        });
+      }
+    }
+  },
+}),
+    {
+      name: 'aeloria-wallet-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        address: state.address,
+        walletType: state.walletType,
+        chainId: state.chainId,
+        isConnected: state.isConnected,
+      }),
+    }
+  )
+);
