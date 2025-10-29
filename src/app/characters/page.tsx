@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BrowserProvider } from 'ethers';
+import { useWallet } from '@/hooks/useWallet';
 
 interface Character {
   _id: string;
@@ -25,38 +25,16 @@ const CLASS_NAMES = ['Warrior', 'Mage', 'Archer', 'Rogue', 'Cleric', 'Paladin'];
 const CLASS_ICONS = ['⚔️', '🔮', '🏹', '🗡️', '✨', '🛡️'];
 
 export default function CharactersPage() {
-  const [address, setAddress] = useState<string>('');
+  const { address, connect } = useWallet();
   const [activeTab, setActiveTab] = useState<'ingame' | 'wallet'>('ingame');
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get wallet address from localStorage or window.ethereum
-    const checkWallet = async () => {
-      if (typeof window !== 'undefined' && window.ethereum) {
-        try {
-          // Request accounts first
-          const accounts = await window.ethereum.request({ 
-            method: 'eth_requestAccounts' 
-          });
-          
-          if (accounts && accounts.length > 0) {
-            const provider = new BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            const addr = await signer.getAddress();
-            setAddress(addr);
-          }
-        } catch (error) {
-          console.log('Wallet not connected:', error);
-        }
-      }
-    };
-    checkWallet();
-  }, []);
-
-  useEffect(() => {
     if (address) {
       loadCharacters();
+    } else {
+      setLoading(false);
     }
   }, [address, activeTab]);
 
@@ -109,9 +87,15 @@ export default function CharactersPage() {
   if (!address) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center p-8">
           <h1 className="text-4xl font-bold text-yellow-400 mb-4">⚔️ My Characters</h1>
-          <p className="text-gray-300">Please connect your wallet first</p>
+          <p className="text-gray-300 mb-6">Please connect your wallet to view your characters</p>
+          <button
+            onClick={connect}
+            className="bg-yellow-500 hover:bg-yellow-600 text-black px-8 py-4 rounded-lg font-bold text-lg"
+          >
+            Connect Wallet
+          </button>
         </div>
       </div>
     );
