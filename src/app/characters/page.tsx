@@ -91,7 +91,7 @@ export default function CharactersPage() {
           <h1 className="text-4xl font-bold text-yellow-400 mb-4">⚔️ My Characters</h1>
           <p className="text-gray-300 mb-6">Please connect your wallet to view your characters</p>
           <button
-            onClick={connect}
+            onClick={() => connect()}
             className="bg-yellow-500 hover:bg-yellow-600 text-black px-8 py-4 rounded-lg font-bold text-lg"
           >
             Connect Wallet
