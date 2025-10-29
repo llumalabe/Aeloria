@@ -1,28 +1,57 @@
 import { Router } from 'express';
 import User from '../models/User.model';
+import Character, { CharacterClass } from '../models/Character.model';
 
 const router = Router();
+
+// Get base stats for Warrior
+const getWarriorStats = () => {
+  return { hp: 150, maxHp: 150, str: 15, agi: 8, int: 5, luk: 7, vit: 12 };
+};
 
 // POST /api/users/register - Register new user
 router.post('/register', async (req, res) => {
   try {
     const { walletAddress, username } = req.body;
 
+    const normalizedAddress = walletAddress.toLowerCase();
+
     // Check if user exists
-    const existingUser = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
+    const existingUser = await User.findOne({ walletAddress: normalizedAddress });
     if (existingUser) {
       return res.status(400).json({ success: false, error: 'User already exists' });
     }
 
     // Create new user
     const user = new User({
-      walletAddress: walletAddress.toLowerCase(),
+      walletAddress: normalizedAddress,
       username,
     });
 
     await user.save();
 
-    res.json({ success: true, user });
+    // Auto-create starter Warrior character
+    const starterStats = getWarriorStats();
+    const starterCharacter = new Character({
+      walletAddress: normalizedAddress,
+      characterName: 'Starter Warrior',
+      characterClass: CharacterClass.WARRIOR,
+      level: 1,
+      exp: 0,
+      ...starterStats,
+      isNFT: false,
+      isBoundToAccount: true,
+      tokenId: null,
+    });
+
+    await starterCharacter.save();
+
+    res.json({ 
+      success: true, 
+      user,
+      starterCharacter,
+      message: 'User registered with starter character'
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
