@@ -39,10 +39,14 @@ router.post('/register', async (req, res) => {
     const finalUsername = username || `Player_${normalizedAddress.slice(2, 8)}`;
     console.log('👤 Username to use:', finalUsername);
 
+    // Generate referral code
+    const generatedReferralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+
     // Create new user
     const user = new User({
       walletAddress: normalizedAddress,
       username: finalUsername,
+      referralCode: generatedReferralCode,
     });
 
     console.log('💾 Saving user to database...');
