@@ -134,7 +134,7 @@ export default function ShopPage() {
 
         {/* Shop Items */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
-          {filteredItems.map((item) => (
+          {Array.isArray(filteredItems) && filteredItems.map((item) => (
             <div
               key={item.id}
               className="bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-green-500/30 rounded-xl p-6 hover:border-yellow-400 hover:shadow-lg hover:shadow-yellow-400/20 transition-all"
@@ -154,7 +154,7 @@ export default function ShopPage() {
           ))}
         </div>
 
-        {filteredItems.length === 0 && (
+        {(!filteredItems || filteredItems.length === 0) && (
           <div className="text-center py-20">
             <p className="text-gray-400 text-xl">No items in this category</p>
           </div>
