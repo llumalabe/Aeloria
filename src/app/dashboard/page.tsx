@@ -11,12 +11,19 @@ export default function Dashboard() {
     const checkWallet = async () => {
       if (typeof window !== 'undefined' && window.ethereum) {
         try {
-          const provider = new BrowserProvider(window.ethereum);
-          const signer = await provider.getSigner();
-          const addr = await signer.getAddress();
-          setAddress(addr);
+          // Request accounts first
+          const accounts = await window.ethereum.request({ 
+            method: 'eth_requestAccounts' 
+          });
+          
+          if (accounts && accounts.length > 0) {
+            const provider = new BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            const addr = await signer.getAddress();
+            setAddress(addr);
+          }
         } catch (error) {
-          console.log('Wallet not connected');
+          console.log('Wallet not connected:', error);
         }
       }
       setLoading(false);
