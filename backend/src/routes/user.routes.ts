@@ -179,4 +179,123 @@ router.post('/:walletAddress/currency', async (req, res) => {
   }
 });
 
+// GET /api/users/:walletAddress/energy - Get and auto-reset energy
+router.get('/:walletAddress/energy', async (req, res) => {
+  try {
+    const user = await User.findOne({ walletAddress: req.params.walletAddress.toLowerCase() });
+    
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    // Check if energy needs reset (9:00 AM Thailand time = 2:00 AM UTC)
+    const now = new Date();
+    const thailandTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+    const lastReset = new Date(user.lastEnergyReset.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }));
+    
+    const currentHour = thailandTime.getHours();
+    const lastResetHour = lastReset.getHours();
+    const isSameDay = thailandTime.toDateString() === lastReset.toDateString();
+    
+    // Reset if it's past 9:00 AM and hasn't been reset today
+    if (currentHour >= 9 && (!isSameDay || lastResetHour < 9)) {
+      user.energy = user.maxEnergy;
+      user.lastEnergyReset = now;
+      await user.save();
+    }
+
+    res.json({ 
+      success: true, 
+      energy: user.energy,
+      maxEnergy: user.maxEnergy,
+      lastReset: user.lastEnergyReset
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/users/:walletAddress/energy/use - Use energy
+router.post('/:walletAddress/energy/use', async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const user = await User.findOne({ walletAddress: req.params.walletAddress.toLowerCase() });
+    
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    if (user.energy < amount) {
+      return res.status(400).json({ success: false, error: 'Not enough energy' });
+    }
+
+    user.energy -= amount;
+    await user.save();
+
+    res.json({ success: true, energy: user.energy, maxEnergy: user.maxEnergy });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/users/:walletAddress/wallet/deposit - Deposit AETH to game
+router.post('/:walletAddress/wallet/deposit', async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const user = await User.findOne({ walletAddress: req.params.walletAddress.toLowerCase() });
+    
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid amount' });
+    }
+
+    // In production, verify blockchain transaction here
+    user.tokens += amount;
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      tokens: user.tokens,
+      message: `Deposited ${amount} AETH tokens`
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/users/:walletAddress/wallet/withdraw - Withdraw AETH from game
+router.post('/:walletAddress/wallet/withdraw', async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const user = await User.findOne({ walletAddress: req.params.walletAddress.toLowerCase() });
+    
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid amount' });
+    }
+
+    if (user.tokens < amount) {
+      return res.status(400).json({ success: false, error: 'Insufficient tokens' });
+    }
+
+    // In production, send blockchain transaction here
+    user.tokens -= amount;
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      tokens: user.tokens,
+      message: `Withdrawn ${amount} AETH tokens`
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;

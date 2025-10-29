@@ -9,6 +9,9 @@ export interface IUser extends Document {
   tokens: number;
   level: number;
   exp: number;
+  energy: number;
+  maxEnergy: number;
+  lastEnergyReset: Date;
   lastLoginDate: Date;
   loginStreak: number;
   totalPlayTime: number;
@@ -63,6 +66,19 @@ const UserSchema: Schema = new Schema(
       type: Number,
       default: 0,
       min: 0,
+    },
+    energy: {
+      type: Number,
+      default: 30,
+      min: 0,
+    },
+    maxEnergy: {
+      type: Number,
+      default: 30,
+    },
+    lastEnergyReset: {
+      type: Date,
+      default: Date.now,
     },
     lastLoginDate: {
       type: Date,

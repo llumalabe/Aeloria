@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useWallet } from '@/hooks/useWallet';
+import BackToTown from '@/components/BackToTown';
 
 interface Character {
   _id: string;
@@ -103,6 +104,7 @@ export default function CharactersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black p-8">
+      <BackToTown />
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-yellow-400 mb-8 text-center">
           ⚔️ My Characters

@@ -1,6 +1,7 @@
 'use client';
 
 import { useWallet } from '@/hooks/useWallet';
+import BackToTown from '@/components/BackToTown';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -83,6 +84,7 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-900 via-emerald-900 to-black">
+      <BackToTown />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-5xl font-bold text-center mb-8 text-yellow-400">
           🏪 Item Shop
