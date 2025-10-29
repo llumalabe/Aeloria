@@ -4,7 +4,7 @@ import { useWallet } from '@/hooks/useWallet';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 export default function TownPage() {
   const { address } = useWallet();
@@ -13,9 +13,24 @@ export default function TownPage() {
   const [energy, setEnergy] = useState(30);
   const [maxEnergy, setMaxEnergy] = useState(30);
   const [showWallet, setShowWallet] = useState(false);
-  const [depositAmount, setDepositAmount] = useState('');
-  const [withdrawAmount, setWithdrawAmount] = useState('');
+  
+  // Wallet states
+  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'withdraw'>('select-action');
+  const [selectedToken, setSelectedToken] = useState<'AETH' | 'RON'>('AETH');
+  const [amount, setAmount] = useState('');
   const [walletLoading, setWalletLoading] = useState(false);
+
+  // Calculate amount after fee (for AETH withdrawal only)
+  const amountAfterFee = useMemo(() => {
+    if (walletStep === 'withdraw' && selectedToken === 'AETH' && amount) {
+      const numAmount = parseFloat(amount);
+      if (!isNaN(numAmount)) {
+        const fee = numAmount * 0.05;
+        return numAmount - fee;
+      }
+    }
+    return null;
+  }, [walletStep, selectedToken, amount]);
 
   useEffect(() => {
     if (!address) {
@@ -44,7 +59,7 @@ export default function TownPage() {
   };
 
   const handleDeposit = async () => {
-    if (!depositAmount || parseFloat(depositAmount) <= 0) {
+    if (!amount || parseFloat(amount) <= 0) {
       alert('Please enter a valid amount');
       return;
     }
@@ -54,13 +69,17 @@ export default function TownPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${address}/wallet/deposit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: parseFloat(depositAmount) }),
+        body: JSON.stringify({ 
+          amount: parseFloat(amount),
+          tokenType: selectedToken
+        }),
       });
       
       const data = await res.json();
       if (data.success) {
         alert(`✅ ${data.message}`);
-        setDepositAmount('');
+        setAmount('');
+        setWalletStep('select-action');
         refreshUserData();
       } else {
         alert(`❌ ${data.error}`);
@@ -74,7 +93,7 @@ export default function TownPage() {
   };
 
   const handleWithdraw = async () => {
-    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+    if (!amount || parseFloat(amount) <= 0) {
       alert('Please enter a valid amount');
       return;
     }
@@ -84,13 +103,17 @@ export default function TownPage() {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${address}/wallet/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: parseFloat(withdrawAmount) }),
+        body: JSON.stringify({ 
+          amount: parseFloat(amount),
+          tokenType: selectedToken
+        }),
       });
       
       const data = await res.json();
       if (data.success) {
         alert(`✅ ${data.message}`);
-        setWithdrawAmount('');
+        setAmount('');
+        setWalletStep('select-action');
         refreshUserData();
       } else {
         alert(`❌ ${data.error}`);
@@ -158,7 +181,7 @@ export default function TownPage() {
             </div>
 
             {/* Currency Display */}
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-4 gap-4 mb-4">
               <div className="bg-black/30 rounded-lg p-4 text-center">
                 <div className="text-3xl mb-1">🪙</div>
                 <div className="text-2xl font-bold text-yellow-400">{userData?.gold?.toLocaleString() || 0}</div>
@@ -172,68 +195,156 @@ export default function TownPage() {
               <div className="bg-black/30 rounded-lg p-4 text-center">
                 <div className="text-3xl mb-1">🔮</div>
                 <div className="text-2xl font-bold text-blue-400">{userData?.tokenBalance || 0}</div>
-                <div className="text-xs text-gray-400">AETH Token</div>
+                <div className="text-xs text-gray-400">AETH</div>
+              </div>
+              <div className="bg-black/30 rounded-lg p-4 text-center">
+                <div className="text-3xl mb-1">🔷</div>
+                <div className="text-2xl font-bold text-cyan-400">{userData?.ronTokens || 0}</div>
+                <div className="text-xs text-gray-400">RON</div>
               </div>
             </div>
 
             {/* Wallet Button */}
             <button
-              onClick={() => setShowWallet(!showWallet)}
+              onClick={() => {
+                setShowWallet(!showWallet);
+                if (!showWallet) {
+                  setWalletStep('select-action');
+                  setAmount('');
+                }
+              }}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 rounded-lg transition-all"
             >
-              {showWallet ? '🔼 Hide Wallet' : '💰 Manage AETH Wallet'}
+              {showWallet ? '🔼 Hide Wallet' : '💰 Wallet'}
             </button>
 
             {/* Wallet Panel */}
             {showWallet && (
               <div className="mt-4 bg-black/40 rounded-lg p-6 border border-blue-500/30">
-                <h3 className="text-xl font-bold text-white mb-4">💰 AETH Token Wallet</h3>
-                
-                {/* Deposit */}
-                <div className="mb-6">
-                  <label className="text-sm text-gray-400 mb-2 block">Deposit AETH (From Ronin Wallet)</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      value={depositAmount}
-                      onChange={(e) => setDepositAmount(e.target.value)}
-                      placeholder="Amount to deposit"
-                      className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                      disabled={walletLoading}
-                    />
+                {/* Step 1: Select Action */}
+                {walletStep === 'select-action' && (
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold text-white mb-4">💰 Wallet</h3>
                     <button
-                      onClick={handleDeposit}
-                      disabled={walletLoading}
-                      className="bg-green-600 hover:bg-green-500 disabled:bg-gray-600 text-white font-bold px-6 py-2 rounded-lg transition-all"
+                      onClick={() => setWalletStep('deposit')}
+                      className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-lg transition-all"
                     >
-                      {walletLoading ? '...' : 'Deposit'}
+                      📥 Deposit (From Ronin Wallet)
+                    </button>
+                    <button
+                      onClick={() => setWalletStep('withdraw')}
+                      className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-lg transition-all"
+                    >
+                      📤 Withdraw (To Ronin Wallet)
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Move AETH from blockchain to in-game wallet</p>
-                </div>
+                )}
 
-                {/* Withdraw */}
-                <div>
-                  <label className="text-sm text-gray-400 mb-2 block">Withdraw AETH (To Ronin Wallet)</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      value={withdrawAmount}
-                      onChange={(e) => setWithdrawAmount(e.target.value)}
-                      placeholder="Amount to withdraw"
-                      className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                      disabled={walletLoading}
-                    />
+                {/* Step 2 & 3: Deposit/Withdraw Form */}
+                {(walletStep === 'deposit' || walletStep === 'withdraw') && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-white">
+                        {walletStep === 'deposit' ? '📥 Deposit' : '📤 Withdraw'}
+                      </h3>
+                      <button
+                        onClick={() => {
+                          setWalletStep('select-action');
+                          setAmount('');
+                        }}
+                        className="text-gray-400 hover:text-white"
+                      >
+                        ← Back
+                      </button>
+                    </div>
+
+                    {/* Token Selection */}
+                    <div>
+                      <label className="text-sm text-gray-400 mb-2 block">Select Token</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => setSelectedToken('AETH')}
+                          className={`py-3 rounded-lg font-bold transition-all ${
+                            selectedToken === 'AETH'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}
+                        >
+                          🔮 AETH
+                        </button>
+                        <button
+                          onClick={() => setSelectedToken('RON')}
+                          className={`py-3 rounded-lg font-bold transition-all ${
+                            selectedToken === 'RON'
+                              ? 'bg-cyan-600 text-white'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}
+                        >
+                          🔷 RON
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Amount Input */}
+                    <div>
+                      <label className="text-sm text-gray-400 mb-2 block">Amount</label>
+                      <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white text-lg focus:outline-none focus:border-blue-500"
+                        disabled={walletLoading}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Available: {selectedToken === 'AETH' ? (userData?.tokenBalance || 0) : (userData?.ronTokens || 0)} {selectedToken}
+                      </p>
+                    </div>
+
+                    {/* Fee Info & Realtime Calculation */}
+                    {walletStep === 'withdraw' && (
+                      <div className="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4">
+                        {selectedToken === 'AETH' ? (
+                          <>
+                            <p className="text-yellow-400 text-sm mb-2">⚠️ Withdrawal Fee: 5%</p>
+                            {amountAfterFee !== null && (
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-white">
+                                  <span>Amount:</span>
+                                  <span>{parseFloat(amount).toFixed(2)} AETH</span>
+                                </div>
+                                <div className="flex justify-between text-red-400">
+                                  <span>Fee (5%):</span>
+                                  <span>-{(parseFloat(amount) * 0.05).toFixed(2)} AETH</span>
+                                </div>
+                                <div className="border-t border-yellow-500/30 pt-1 mt-1"></div>
+                                <div className="flex justify-between text-green-400 font-bold text-lg">
+                                  <span>You'll receive:</span>
+                                  <span>{amountAfterFee.toFixed(2)} AETH</span>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-green-400 text-sm">✅ No withdrawal fee for RON</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Confirm Button */}
                     <button
-                      onClick={handleWithdraw}
-                      disabled={walletLoading}
-                      className="bg-red-600 hover:bg-red-500 disabled:bg-gray-600 text-white font-bold px-6 py-2 rounded-lg transition-all"
+                      onClick={walletStep === 'deposit' ? handleDeposit : handleWithdraw}
+                      disabled={walletLoading || !amount || parseFloat(amount) <= 0}
+                      className={`w-full font-bold py-4 rounded-lg transition-all ${
+                        walletStep === 'deposit'
+                          ? 'bg-green-600 hover:bg-green-500 disabled:bg-gray-600'
+                          : 'bg-red-600 hover:bg-red-500 disabled:bg-gray-600'
+                      } text-white`}
                     >
-                      {walletLoading ? '...' : 'Withdraw'}
+                      {walletLoading ? '⏳ Processing...' : `Confirm ${walletStep === 'deposit' ? 'Deposit' : 'Withdraw'}`}
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Move AETH from in-game wallet to blockchain</p>
-                </div>
+                )}
               </div>
             )}
           </div>

@@ -7,6 +7,7 @@ export interface IUser extends Document {
   gold: number;
   premium: number;
   tokens: number;
+  ronTokens: number;
   level: number;
   exp: number;
   energy: number;
@@ -53,6 +54,11 @@ const UserSchema: Schema = new Schema(
       min: 0,
     },
     tokens: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    ronTokens: {
       type: Number,
       default: 0,
       min: 0,

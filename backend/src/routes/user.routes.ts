@@ -238,10 +238,10 @@ router.post('/:walletAddress/energy/use', async (req, res) => {
   }
 });
 
-// POST /api/users/:walletAddress/wallet/deposit - Deposit AETH to game
+// POST /api/users/:walletAddress/wallet/deposit - Deposit tokens to game
 router.post('/:walletAddress/wallet/deposit', async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, tokenType } = req.body; // tokenType: 'AETH' or 'RON'
     const user = await User.findOne({ walletAddress: req.params.walletAddress.toLowerCase() });
     
     if (!user) {
@@ -252,24 +252,34 @@ router.post('/:walletAddress/wallet/deposit', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid amount' });
     }
 
+    if (!tokenType || !['AETH', 'RON'].includes(tokenType)) {
+      return res.status(400).json({ success: false, error: 'Invalid token type' });
+    }
+
     // In production, verify blockchain transaction here
-    user.tokens += amount;
+    if (tokenType === 'AETH') {
+      user.tokens += amount;
+    } else if (tokenType === 'RON') {
+      user.ronTokens += amount;
+    }
+    
     await user.save();
 
     res.json({ 
       success: true, 
       tokens: user.tokens,
-      message: `Deposited ${amount} AETH tokens`
+      ronTokens: user.ronTokens,
+      message: `Deposited ${amount} ${tokenType}`
     });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// POST /api/users/:walletAddress/wallet/withdraw - Withdraw AETH from game
+// POST /api/users/:walletAddress/wallet/withdraw - Withdraw tokens from game
 router.post('/:walletAddress/wallet/withdraw', async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, tokenType } = req.body; // tokenType: 'AETH' or 'RON'
     const user = await User.findOne({ walletAddress: req.params.walletAddress.toLowerCase() });
     
     if (!user) {
@@ -280,19 +290,52 @@ router.post('/:walletAddress/wallet/withdraw', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid amount' });
     }
 
-    if (user.tokens < amount) {
-      return res.status(400).json({ success: false, error: 'Insufficient tokens' });
+    if (!tokenType || !['AETH', 'RON'].includes(tokenType)) {
+      return res.status(400).json({ success: false, error: 'Invalid token type' });
     }
 
-    // In production, send blockchain transaction here
-    user.tokens -= amount;
-    await user.save();
+    let finalAmount = amount;
+    let fee = 0;
 
-    res.json({ 
-      success: true, 
-      tokens: user.tokens,
-      message: `Withdrawn ${amount} AETH tokens`
-    });
+    // AETH has 5% withdrawal fee, RON has no fee
+    if (tokenType === 'AETH') {
+      fee = amount * 0.05; // 5% fee
+      finalAmount = amount; // User pays from their balance
+      
+      if (user.tokens < finalAmount) {
+        return res.status(400).json({ success: false, error: 'Insufficient AETH tokens' });
+      }
+
+      user.tokens -= finalAmount;
+      const amountAfterFee = finalAmount - fee;
+
+      await user.save();
+
+      res.json({ 
+        success: true, 
+        tokens: user.tokens,
+        ronTokens: user.ronTokens,
+        amountWithdrawn: amountAfterFee,
+        fee: fee,
+        message: `Withdrawn ${amountAfterFee.toFixed(2)} AETH (${fee.toFixed(2)} fee)`
+      });
+    } else if (tokenType === 'RON') {
+      if (user.ronTokens < amount) {
+        return res.status(400).json({ success: false, error: 'Insufficient RON tokens' });
+      }
+
+      user.ronTokens -= amount;
+      await user.save();
+
+      res.json({ 
+        success: true, 
+        tokens: user.tokens,
+        ronTokens: user.ronTokens,
+        amountWithdrawn: amount,
+        fee: 0,
+        message: `Withdrawn ${amount} RON (no fee)`
+      });
+    }
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

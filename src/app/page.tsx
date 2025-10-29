@@ -21,14 +21,6 @@ export default function Home() {
             Embark on an epic Web3 text-based fantasy RPG adventure on the Ronin Network. 
             Battle monsters, collect NFT heroes, and become a legend!
           </p>
-          {address && (
-            <Link 
-              href="/dashboard" 
-              className="inline-block px-10 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg text-xl font-bold hover:scale-105 transition-transform shadow-lg"
-            >
-              🎮 Enter Game
-            </Link>
-          )}
         </div>
       </section>
 
@@ -170,14 +162,6 @@ export default function Home() {
             <p className="text-purple-300 mb-8 text-lg">
               Click the <span className="font-bold text-yellow-400">Login</span> button in the header to connect your wallet
             </p>
-          )}
-          {address && (
-            <Link 
-              href="/dashboard" 
-              className="inline-block px-10 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg text-xl font-bold hover:scale-105 transition-transform shadow-lg"
-            >
-              🎮 Enter Game
-            </Link>
           )}
         </div>
       </section>
