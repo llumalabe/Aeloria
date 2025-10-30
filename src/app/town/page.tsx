@@ -8,16 +8,14 @@ import { useEffect, useState, useMemo } from 'react';
 import TransactionHistory from '@/components/TransactionHistory';
 
 export default function TownPage() {
-  const { address, provider, signer, reconnect, connect, walletType } = useWallet();
+  const { address, provider, signer } = useWallet();
   const { userData, isLoading, refreshUserData } = useAuth();
   const router = useRouter();
   const [energy, setEnergy] = useState(30);
   const [maxEnergy, setMaxEnergy] = useState(30);
   const [showWallet, setShowWallet] = useState(false);
-  const [isReconnecting, setIsReconnecting] = useState(false);
   
-  // Blockchain state - use address as connected indicator
-  const blockchainConnected = !!address; // If address exists, wallet is connected
+  // Blockchain balances
   const [blockchainBalances, setBlockchainBalances] = useState({ aethBalance: '0', ronBalance: '0' });
   
   // Wallet states
@@ -44,49 +42,13 @@ export default function TownPage() {
     }
   }, [address, router]);
 
-  // Reconnect wallet if address exists but no signer
+  // Fetch energy and balances when wallet is ready
   useEffect(() => {
-    const ensureWalletConnected = async () => {
-      // If we have address but no signer/provider, need to reconnect
-      if (address && (!signer || !provider) && !isReconnecting) {
-        console.log('Wallet session exists but not fully connected, reconnecting...');
-        setIsReconnecting(true);
-        try {
-          // Try to connect using stored wallet type
-          if (walletType) {
-            await connect(walletType);
-          } else {
-            await connect(); // Auto-detect
-          }
-          console.log('✅ Wallet reconnected successfully');
-        } catch (error) {
-          console.error('Failed to reconnect wallet:', error);
-          // Don't show error to user - they can manually connect via button
-        } finally {
-          setIsReconnecting(false);
-        }
-      }
-    };
-    ensureWalletConnected();
-  }, [address, signer, provider, walletType, connect, isReconnecting]);
-
-  // Fetch energy and balances on load
-  useEffect(() => {
-    if (address) {
+    if (address && provider && signer) {
       fetchEnergy();
-      if (provider) {
-        fetchBlockchainBalances();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, provider]);
-
-  const initBlockchain = async () => {
-    // Fetch balances
-    if (address && provider) {
       fetchBlockchainBalances();
     }
-  };
+  }, [address, provider, signer]);
 
   const fetchBlockchainBalances = async () => {
     if (!address || !provider) return;
@@ -416,22 +378,14 @@ export default function TownPage() {
                 <div className="mb-4 pb-4 border-b border-gray-600">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${blockchainConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <div className={`w-3 h-3 rounded-full ${(!!signer && !!provider) ? 'bg-green-500' : 'bg-red-500'}`} />
                       <span className="text-sm text-gray-400">
-                        {blockchainConnected ? '🔗 Connected to Ronin' : '⚠️ Not Connected'}
+                        {(!!signer && !!provider) ? '🔗 Connected to Ronin' : '⚠️ Not Connected'}
                       </span>
                     </div>
-                    {!blockchainConnected && (
-                      <button
-                        onClick={initBlockchain}
-                        className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded"
-                      >
-                        Connect Wallet
-                      </button>
-                    )}
                   </div>
                   
-                  {blockchainConnected && (
+                  {(!!signer && !!provider) && (
                     <>
                       <div className="mt-3 grid grid-cols-2 gap-3 bg-black/30 rounded p-3">
                         <div>
@@ -491,14 +445,14 @@ export default function TownPage() {
                     <h3 className="text-xl font-bold text-white mb-4">💰 Wallet</h3>
                     <button
                       onClick={() => setWalletStep('deposit')}
-                      disabled={!blockchainConnected}
+                      disabled={!signer || !provider}
                       className="w-full bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 rounded-lg transition-all"
                     >
                       📥 Deposit (From Ronin Wallet)
                     </button>
                     <button
                       onClick={() => setWalletStep('withdraw')}
-                      disabled={!blockchainConnected}
+                      disabled={!signer || !provider}
                       className="w-full bg-red-600 hover:bg-red-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 rounded-lg transition-all"
                     >
                       📤 Withdraw (To Ronin Wallet)
