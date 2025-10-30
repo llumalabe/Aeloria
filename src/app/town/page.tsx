@@ -5,11 +5,10 @@ import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
-import { blockchainWallet } from '@/lib/blockchain';
 import TransactionHistory from '@/components/TransactionHistory';
 
 export default function TownPage() {
-  const { address } = useWallet();
+  const { address, provider, signer } = useWallet();
   const { userData, isLoading, refreshUserData } = useAuth();
   const router = useRouter();
   const [energy, setEnergy] = useState(30);
@@ -54,17 +53,32 @@ export default function TownPage() {
 
   const initBlockchain = async () => {
     // Wallet already connected via useWallet, just fetch balances
-    if (address) {
+    if (address && provider) {
       fetchBlockchainBalances();
     }
   };
 
   const fetchBlockchainBalances = async () => {
-    if (!address) return;
+    if (!address || !provider) return;
     
-    const balances = await blockchainWallet.getBalances(address);
-    if (balances) {
-      setBlockchainBalances(balances);
+    try {
+      const { ethers } = await import('ethers');
+      const AeloriaTokenABI = (await import('@/lib/abis/AeloriaToken.json')).default;
+      const { CONTRACTS } = await import('@/config/contracts');
+      
+      // Get AETH balance
+      const aethContract = new ethers.Contract(CONTRACTS.AETH_TOKEN, AeloriaTokenABI, provider);
+      const aethBalance = await aethContract.balanceOf(address);
+      
+      // Get RON balance
+      const ronBalance = await provider.getBalance(address);
+      
+      setBlockchainBalances({
+        aethBalance: ethers.formatEther(aethBalance),
+        ronBalance: ethers.formatEther(ronBalance)
+      });
+    } catch (error) {
+      console.error('Failed to fetch balances:', error);
     }
   };
 
@@ -87,22 +101,46 @@ export default function TownPage() {
       return;
     }
 
-    if (!blockchainConnected) {
+    if (!signer || !address) {
       alert('Please connect your Ronin Wallet first');
       return;
     }
 
     setWalletLoading(true);
     try {
-      let result;
+      const { ethers } = await import('ethers');
+      const WalletManagerABI = (await import('@/lib/abis/WalletManager.json')).default;
+      const AeloriaTokenABI = (await import('@/lib/abis/AeloriaToken.json')).default;
+      const { CONTRACTS } = await import('@/config/contracts');
+      
+      let txHash: string;
       
       if (selectedToken === 'AETH') {
-        result = await blockchainWallet.depositAeth(amount);
+        // Deposit AETH
+        const aethContract = new ethers.Contract(CONTRACTS.AETH_TOKEN, AeloriaTokenABI, signer);
+        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, signer);
+        
+        const amountWei = ethers.parseEther(amount);
+        
+        // Approve
+        const approveTx = await aethContract.approve(CONTRACTS.WALLET_MANAGER, amountWei);
+        await approveTx.wait();
+        
+        // Deposit
+        const depositTx = await walletManager.depositAeth(amountWei);
+        const receipt = await depositTx.wait();
+        txHash = receipt.hash;
       } else {
-        result = await blockchainWallet.depositRon(amount);
+        // Deposit RON
+        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, signer);
+        const amountWei = ethers.parseEther(amount);
+        
+        const depositTx = await walletManager.depositRon({ value: amountWei });
+        const receipt = await depositTx.wait();
+        txHash = receipt.hash;
       }
 
-      if (result.success && result.txHash) {
+      if (txHash) {
         // Send transaction to backend for verification
         try {
           const backendRes = await fetch(
@@ -111,8 +149,9 @@ export default function TownPage() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                txHash: result.txHash,
+                txHash: txHash,
                 tokenType: selectedToken,
+                amount: parseFloat(amount),
               }),
             }
           );
@@ -120,13 +159,13 @@ export default function TownPage() {
           const backendData = await backendRes.json();
 
           if (backendData.success) {
-            alert(`✅ Deposit successful!\nAmount: ${backendData.amount} ${selectedToken}\nTransaction: ${result.txHash}`);
+            alert(`✅ Deposit successful!\nAmount: ${amount} ${selectedToken}\nTransaction: ${txHash}`);
           } else {
-            alert(`⚠️ Blockchain transaction succeeded but backend verification failed:\n${backendData.error}\n\nYour tokens are safe on-chain. Contact support with this TX: ${result.txHash}`);
+            alert(`⚠️ Blockchain transaction succeeded but backend verification failed:\n${backendData.error}\n\nYour tokens are safe on-chain. Contact support with this TX: ${txHash}`);
           }
         } catch (backendError) {
           console.error('Backend verification error:', backendError);
-          alert(`⚠️ Blockchain transaction succeeded but couldn't sync with backend.\n\nYour tokens are safe on-chain. TX: ${result.txHash}`);
+          alert(`⚠️ Blockchain transaction succeeded but couldn't sync with backend.\n\nYour tokens are safe on-chain. TX: ${txHash}`);
         }
 
         setAmount('');
@@ -135,12 +174,10 @@ export default function TownPage() {
         // Refresh balances
         await fetchBlockchainBalances();
         await refreshUserData();
-      } else {
-        alert(`❌ Deposit failed: ${result.error}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Deposit error:', error);
-      alert('Failed to deposit tokens');
+      alert(`❌ Deposit failed: ${error.message || 'Unknown error'}`);
     } finally {
       setWalletLoading(false);
     }
@@ -152,22 +189,33 @@ export default function TownPage() {
       return;
     }
 
-    if (!blockchainConnected) {
+    if (!signer || !address) {
       alert('Please connect your Ronin Wallet first');
       return;
     }
 
     setWalletLoading(true);
     try {
-      let result;
+      const { ethers } = await import('ethers');
+      const WalletManagerABI = (await import('@/lib/abis/WalletManager.json')).default;
+      const { CONTRACTS } = await import('@/config/contracts');
+      
+      const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, signer);
+      const amountWei = ethers.parseEther(amount);
+      
+      let txHash: string;
       
       if (selectedToken === 'AETH') {
-        result = await blockchainWallet.withdrawAeth(amount);
+        const withdrawTx = await walletManager.withdrawAeth(amountWei);
+        const receipt = await withdrawTx.wait();
+        txHash = receipt.hash;
       } else {
-        result = await blockchainWallet.withdrawRon(amount);
+        const withdrawTx = await walletManager.withdrawRon(amountWei);
+        const receipt = await withdrawTx.wait();
+        txHash = receipt.hash;
       }
 
-      if (result.success && result.txHash) {
+      if (txHash) {
         // Send transaction to backend for verification
         try {
           const backendRes = await fetch(
@@ -176,8 +224,9 @@ export default function TownPage() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                txHash: result.txHash,
+                txHash: txHash,
                 tokenType: selectedToken,
+                amount: parseFloat(amount),
               }),
             }
           );
@@ -188,13 +237,13 @@ export default function TownPage() {
             const feeMsg = backendData.fee && parseFloat(backendData.fee) > 0 
               ? `\nFee: ${backendData.fee} ${selectedToken}`
               : '';
-            alert(`✅ Withdrawal successful!\nAmount: ${backendData.amount} ${selectedToken}${feeMsg}\nTransaction: ${result.txHash}`);
+            alert(`✅ Withdrawal successful!\nAmount: ${amount} ${selectedToken}${feeMsg}\nTransaction: ${txHash}`);
           } else {
-            alert(`⚠️ Blockchain transaction succeeded but backend verification failed:\n${backendData.error}\n\nYour tokens were withdrawn safely. Contact support with this TX: ${result.txHash}`);
+            alert(`⚠️ Blockchain transaction succeeded but backend verification failed:\n${backendData.error}\n\nYour tokens were withdrawn safely. Contact support with this TX: ${txHash}`);
           }
         } catch (backendError) {
           console.error('Backend verification error:', backendError);
-          alert(`⚠️ Blockchain transaction succeeded but couldn't sync with backend.\n\nYour tokens were withdrawn safely. TX: ${result.txHash}`);
+          alert(`⚠️ Blockchain transaction succeeded but couldn't sync with backend.\n\nYour tokens were withdrawn safely. TX: ${txHash}`);
         }
 
         setAmount('');
@@ -203,12 +252,10 @@ export default function TownPage() {
         // Refresh balances
         await fetchBlockchainBalances();
         await refreshUserData();
-      } else {
-        alert(`❌ Withdrawal failed: ${result.error}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Withdraw error:', error);
-      alert('Failed to withdraw tokens');
+      alert(`❌ Withdrawal failed: ${error.message || 'Unknown error'}`);
     } finally {
       setWalletLoading(false);
     }
