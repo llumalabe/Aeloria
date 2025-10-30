@@ -16,8 +16,8 @@ export default function TownPage() {
   const [maxEnergy, setMaxEnergy] = useState(30);
   const [showWallet, setShowWallet] = useState(false);
   
-  // Blockchain state
-  const [blockchainConnected, setBlockchainConnected] = useState(false);
+  // Blockchain state - use address as connected indicator
+  const blockchainConnected = !!address; // If address exists, wallet is connected
   const [blockchainBalances, setBlockchainBalances] = useState({ aethBalance: '0', ronBalance: '0' });
   
   // Wallet states
@@ -53,10 +53,8 @@ export default function TownPage() {
   }, [address]);
 
   const initBlockchain = async () => {
-    const connected = await blockchainWallet.connect();
-    setBlockchainConnected(connected);
-    
-    if (connected && address) {
+    // Wallet already connected via useWallet, just fetch balances
+    if (address) {
       fetchBlockchainBalances();
     }
   };

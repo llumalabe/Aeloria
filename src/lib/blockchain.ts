@@ -89,16 +89,20 @@ export class BlockchainWallet {
    * Connect via Browser Extension (Desktop)
    */
   private async connectDesktop(): Promise<boolean> {
-    // Check if wallet extension exists
-    if (typeof window === 'undefined' || !(window as any).ethereum) {
+    // Check if wallet extension exists (Ronin Wallet or Ronin Waypoint)
+    const roninProvider = (window as any).ronin?.provider;
+    const ethereumProvider = (window as any).ethereum;
+    
+    if (typeof window === 'undefined' || (!roninProvider && !ethereumProvider)) {
       alert('❌ Ronin Wallet extension not found!\n\n' +
             '📥 Please install Ronin Wallet:\n' +
             'Chrome: https://chrome.google.com/webstore/detail/ronin-wallet');
       return false;
     }
 
-    // Create provider
-    this.provider = new ethers.BrowserProvider((window as any).ethereum);
+    // Use Ronin provider if available, otherwise fallback to ethereum
+    const provider = roninProvider || ethereumProvider;
+    this.provider = new ethers.BrowserProvider(provider);
 
     // Request account access
     await this.provider.send('eth_requestAccounts', []);
