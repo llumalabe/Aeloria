@@ -8,7 +8,7 @@ import { useEffect, useState, useMemo } from 'react';
 import TransactionHistory from '@/components/TransactionHistory';
 
 export default function TownPage() {
-  const { address, provider, signer } = useWallet();
+  const { address, provider, signer, reconnect } = useWallet();
   const { userData, isLoading, refreshUserData } = useAuth();
   const router = useRouter();
   const [energy, setEnergy] = useState(30);
@@ -41,6 +41,21 @@ export default function TownPage() {
       router.push('/');
     }
   }, [address, router]);
+
+  // Reconnect wallet on page load if address exists but no provider/signer
+  useEffect(() => {
+    const initWallet = async () => {
+      if (address && (!provider || !signer)) {
+        try {
+          await reconnect();
+          console.log('✅ Wallet reconnected');
+        } catch (error) {
+          console.error('Failed to reconnect wallet:', error);
+        }
+      }
+    };
+    initWallet();
+  }, [address, provider, signer, reconnect]);
 
   // Fetch energy and balances when wallet is ready
   useEffect(() => {
