@@ -225,6 +225,16 @@ export default function TownPage() {
       return;
     }
 
+    // Check if user has enough balance on-chain
+    const onChainBalance = selectedToken === 'AETH' 
+      ? parseFloat(blockchainBalances.aethBalance)
+      : parseFloat(blockchainBalances.ronBalance);
+    
+    if (onChainBalance < parseFloat(amount)) {
+      alert(`❌ Insufficient on-chain balance!\n\nYou have ${onChainBalance.toFixed(4)} ${selectedToken} on-chain.\nYou need to deposit first before withdrawing.`);
+      return;
+    }
+
     // Check if user has RON for gas fees
     if (parseFloat(blockchainBalances.ronBalance) < 0.001) {
       alert('⚠️ Insufficient RON for gas fees!\n\nYou need at least 0.001 RON in your wallet to pay for transaction fees.\n\nGet free testnet RON from:\nhttps://faucet.roninchain.com');
@@ -236,11 +246,9 @@ export default function TownPage() {
       const { ethers } = await import('ethers');
       const WalletManagerABI = (await import('@/lib/abis/WalletManager.json')).default;
       const { CONTRACTS } = await import('@/config/contracts');
-      
+
       const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, signer);
-      const amountWei = ethers.parseEther(amount);
-      
-      let txHash: string;
+      const amountWei = ethers.parseEther(amount);      let txHash: string;
       
       if (selectedToken === 'AETH') {
         const withdrawTx = await walletManager.withdrawAeth(amountWei);
@@ -370,7 +378,7 @@ export default function TownPage() {
               </div>
               <div className="bg-black/30 rounded-lg p-4 text-center">
                 <div className="text-3xl mb-1">🔮</div>
-                <div className="text-2xl font-bold text-blue-400">{userData?.tokenBalance || 0}</div>
+                <div className="text-2xl font-bold text-blue-400">{userData?.tokens || 0}</div>
                 <div className="text-xs text-gray-400">AETH</div>
               </div>
               <div className="bg-black/30 rounded-lg p-4 text-center">
