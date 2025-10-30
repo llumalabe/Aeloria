@@ -8,7 +8,7 @@ import { useEffect, useState, useMemo } from 'react';
 import TransactionHistory from '@/components/TransactionHistory';
 
 export default function TownPage() {
-  const { address, provider, signer } = useWallet();
+  const { address, provider, signer, reconnect } = useWallet();
   const { userData, isLoading, refreshUserData } = useAuth();
   const router = useRouter();
   const [energy, setEnergy] = useState(30);
@@ -43,16 +43,34 @@ export default function TownPage() {
     }
   }, [address, router]);
 
-  // Fetch energy on load
+  // Reconnect wallet if address exists but no signer
+  useEffect(() => {
+    const reconnectWallet = async () => {
+      if (address && !signer) {
+        console.log('Reconnecting wallet...');
+        try {
+          await reconnect();
+        } catch (error) {
+          console.error('Failed to reconnect:', error);
+        }
+      }
+    };
+    reconnectWallet();
+  }, [address, signer, reconnect]);
+
+  // Fetch energy and balances on load
   useEffect(() => {
     if (address) {
       fetchEnergy();
-      initBlockchain();
+      if (provider) {
+        fetchBlockchainBalances();
+      }
     }
-  }, [address]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, provider]);
 
   const initBlockchain = async () => {
-    // Wallet already connected via useWallet, just fetch balances
+    // Fetch balances
     if (address && provider) {
       fetchBlockchainBalances();
     }
