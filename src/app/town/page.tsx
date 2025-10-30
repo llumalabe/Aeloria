@@ -8,12 +8,13 @@ import { useEffect, useState, useMemo } from 'react';
 import TransactionHistory from '@/components/TransactionHistory';
 
 export default function TownPage() {
-  const { address, provider, signer, reconnect } = useWallet();
+  const { address, provider, signer, reconnect, connect, walletType } = useWallet();
   const { userData, isLoading, refreshUserData } = useAuth();
   const router = useRouter();
   const [energy, setEnergy] = useState(30);
   const [maxEnergy, setMaxEnergy] = useState(30);
   const [showWallet, setShowWallet] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   
   // Blockchain state - use address as connected indicator
   const blockchainConnected = !!address; // If address exists, wallet is connected
@@ -45,18 +46,29 @@ export default function TownPage() {
 
   // Reconnect wallet if address exists but no signer
   useEffect(() => {
-    const reconnectWallet = async () => {
-      if (address && !signer) {
-        console.log('Reconnecting wallet...');
+    const ensureWalletConnected = async () => {
+      // If we have address but no signer/provider, need to reconnect
+      if (address && (!signer || !provider) && !isReconnecting) {
+        console.log('Wallet session exists but not fully connected, reconnecting...');
+        setIsReconnecting(true);
         try {
-          await reconnect();
+          // Try to connect using stored wallet type
+          if (walletType) {
+            await connect(walletType);
+          } else {
+            await connect(); // Auto-detect
+          }
+          console.log('✅ Wallet reconnected successfully');
         } catch (error) {
-          console.error('Failed to reconnect:', error);
+          console.error('Failed to reconnect wallet:', error);
+          // Don't show error to user - they can manually connect via button
+        } finally {
+          setIsReconnecting(false);
         }
       }
     };
-    reconnectWallet();
-  }, [address, signer, reconnect]);
+    ensureWalletConnected();
+  }, [address, signer, provider, walletType, connect, isReconnecting]);
 
   // Fetch energy and balances on load
   useEffect(() => {
