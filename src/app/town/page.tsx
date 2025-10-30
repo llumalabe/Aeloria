@@ -5,6 +5,8 @@ import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
+import { blockchainWallet } from '@/lib/blockchain';
+import TransactionHistory from '@/components/TransactionHistory';
 
 export default function TownPage() {
   const { address } = useWallet();
@@ -13,6 +15,10 @@ export default function TownPage() {
   const [energy, setEnergy] = useState(30);
   const [maxEnergy, setMaxEnergy] = useState(30);
   const [showWallet, setShowWallet] = useState(false);
+  
+  // Blockchain state
+  const [blockchainConnected, setBlockchainConnected] = useState(false);
+  const [blockchainBalances, setBlockchainBalances] = useState({ aethBalance: '0', ronBalance: '0' });
   
   // Wallet states
   const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'withdraw'>('select-action');
@@ -42,8 +48,27 @@ export default function TownPage() {
   useEffect(() => {
     if (address) {
       fetchEnergy();
+      initBlockchain();
     }
   }, [address]);
+
+  const initBlockchain = async () => {
+    const connected = await blockchainWallet.connect();
+    setBlockchainConnected(connected);
+    
+    if (connected && address) {
+      fetchBlockchainBalances();
+    }
+  };
+
+  const fetchBlockchainBalances = async () => {
+    if (!address) return;
+    
+    const balances = await blockchainWallet.getBalances(address);
+    if (balances) {
+      setBlockchainBalances(balances);
+    }
+  };
 
   const fetchEnergy = async () => {
     try {
@@ -64,25 +89,56 @@ export default function TownPage() {
       return;
     }
 
+    if (!blockchainConnected) {
+      alert('Please connect your Ronin Wallet first');
+      return;
+    }
+
     setWalletLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${address}/wallet/deposit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          amount: parseFloat(amount),
-          tokenType: selectedToken
-        }),
-      });
+      let result;
       
-      const data = await res.json();
-      if (data.success) {
-        alert(`✅ ${data.message}`);
+      if (selectedToken === 'AETH') {
+        result = await blockchainWallet.depositAeth(amount);
+      } else {
+        result = await blockchainWallet.depositRon(amount);
+      }
+
+      if (result.success && result.txHash) {
+        // Send transaction to backend for verification
+        try {
+          const backendRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/users/${address}/wallet/deposit`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                txHash: result.txHash,
+                tokenType: selectedToken,
+              }),
+            }
+          );
+
+          const backendData = await backendRes.json();
+
+          if (backendData.success) {
+            alert(`✅ Deposit successful!\nAmount: ${backendData.amount} ${selectedToken}\nTransaction: ${result.txHash}`);
+          } else {
+            alert(`⚠️ Blockchain transaction succeeded but backend verification failed:\n${backendData.error}\n\nYour tokens are safe on-chain. Contact support with this TX: ${result.txHash}`);
+          }
+        } catch (backendError) {
+          console.error('Backend verification error:', backendError);
+          alert(`⚠️ Blockchain transaction succeeded but couldn't sync with backend.\n\nYour tokens are safe on-chain. TX: ${result.txHash}`);
+        }
+
         setAmount('');
         setWalletStep('select-action');
-        refreshUserData();
+        
+        // Refresh balances
+        await fetchBlockchainBalances();
+        await refreshUserData();
       } else {
-        alert(`❌ ${data.error}`);
+        alert(`❌ Deposit failed: ${result.error}`);
       }
     } catch (error) {
       console.error('Deposit error:', error);
@@ -98,25 +154,59 @@ export default function TownPage() {
       return;
     }
 
+    if (!blockchainConnected) {
+      alert('Please connect your Ronin Wallet first');
+      return;
+    }
+
     setWalletLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${address}/wallet/withdraw`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          amount: parseFloat(amount),
-          tokenType: selectedToken
-        }),
-      });
+      let result;
       
-      const data = await res.json();
-      if (data.success) {
-        alert(`✅ ${data.message}`);
+      if (selectedToken === 'AETH') {
+        result = await blockchainWallet.withdrawAeth(amount);
+      } else {
+        result = await blockchainWallet.withdrawRon(amount);
+      }
+
+      if (result.success && result.txHash) {
+        // Send transaction to backend for verification
+        try {
+          const backendRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/users/${address}/wallet/withdraw`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                txHash: result.txHash,
+                tokenType: selectedToken,
+              }),
+            }
+          );
+
+          const backendData = await backendRes.json();
+
+          if (backendData.success) {
+            const feeMsg = backendData.fee && parseFloat(backendData.fee) > 0 
+              ? `\nFee: ${backendData.fee} ${selectedToken}`
+              : '';
+            alert(`✅ Withdrawal successful!\nAmount: ${backendData.amount} ${selectedToken}${feeMsg}\nTransaction: ${result.txHash}`);
+          } else {
+            alert(`⚠️ Blockchain transaction succeeded but backend verification failed:\n${backendData.error}\n\nYour tokens were withdrawn safely. Contact support with this TX: ${result.txHash}`);
+          }
+        } catch (backendError) {
+          console.error('Backend verification error:', backendError);
+          alert(`⚠️ Blockchain transaction succeeded but couldn't sync with backend.\n\nYour tokens were withdrawn safely. TX: ${result.txHash}`);
+        }
+
         setAmount('');
         setWalletStep('select-action');
-        refreshUserData();
+        
+        // Refresh balances
+        await fetchBlockchainBalances();
+        await refreshUserData();
       } else {
-        alert(`❌ ${data.error}`);
+        alert(`❌ Withdrawal failed: ${result.error}`);
       }
     } catch (error) {
       console.error('Withdraw error:', error);
@@ -221,19 +311,54 @@ export default function TownPage() {
             {/* Wallet Panel */}
             {showWallet && (
               <div className="mt-4 bg-black/40 rounded-lg p-6 border border-blue-500/30">
+                {/* Blockchain Status */}
+                <div className="mb-4 pb-4 border-b border-gray-600">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${blockchainConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span className="text-sm text-gray-400">
+                        {blockchainConnected ? '🔗 Connected to Ronin' : '⚠️ Not Connected'}
+                      </span>
+                    </div>
+                    {!blockchainConnected && (
+                      <button
+                        onClick={initBlockchain}
+                        className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded"
+                      >
+                        Connect Wallet
+                      </button>
+                    )}
+                  </div>
+                  
+                  {blockchainConnected && (
+                    <div className="mt-3 grid grid-cols-2 gap-3 bg-black/30 rounded p-3">
+                      <div>
+                        <div className="text-xs text-gray-400">On-Chain AETH</div>
+                        <div className="text-lg font-bold text-blue-400">{parseFloat(blockchainBalances.aethBalance).toFixed(2)}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-400">On-Chain RON</div>
+                        <div className="text-lg font-bold text-cyan-400">{parseFloat(blockchainBalances.ronBalance).toFixed(4)}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Step 1: Select Action */}
                 {walletStep === 'select-action' && (
                   <div className="space-y-4">
                     <h3 className="text-xl font-bold text-white mb-4">💰 Wallet</h3>
                     <button
                       onClick={() => setWalletStep('deposit')}
-                      className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-lg transition-all"
+                      disabled={!blockchainConnected}
+                      className="w-full bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 rounded-lg transition-all"
                     >
                       📥 Deposit (From Ronin Wallet)
                     </button>
                     <button
                       onClick={() => setWalletStep('withdraw')}
-                      className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-lg transition-all"
+                      disabled={!blockchainConnected}
+                      className="w-full bg-red-600 hover:bg-red-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 rounded-lg transition-all"
                     >
                       📤 Withdraw (To Ronin Wallet)
                     </button>
@@ -442,6 +567,13 @@ export default function TownPage() {
             <p className="text-gray-300">Join or create a guild</p>
           </Link>
         </div>
+
+        {/* Transaction History */}
+        {address && (
+          <div className="max-w-4xl mx-auto mt-8">
+            <TransactionHistory walletAddress={address} />
+          </div>
+        )}
       </div>
     </div>
   );
