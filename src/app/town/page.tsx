@@ -420,16 +420,56 @@ export default function TownPage() {
                   </div>
                   
                   {blockchainConnected && (
-                    <div className="mt-3 grid grid-cols-2 gap-3 bg-black/30 rounded p-3">
-                      <div>
-                        <div className="text-xs text-gray-400">On-Chain AETH</div>
-                        <div className="text-lg font-bold text-blue-400">{parseFloat(blockchainBalances.aethBalance).toFixed(2)}</div>
+                    <>
+                      <div className="mt-3 grid grid-cols-2 gap-3 bg-black/30 rounded p-3">
+                        <div>
+                          <div className="text-xs text-gray-400">On-Chain AETH</div>
+                          <div className="text-lg font-bold text-blue-400">{parseFloat(blockchainBalances.aethBalance).toFixed(2)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-400">On-Chain RON</div>
+                          <div className="text-lg font-bold text-cyan-400">{parseFloat(blockchainBalances.ronBalance).toFixed(4)}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-xs text-gray-400">On-Chain RON</div>
-                        <div className="text-lg font-bold text-cyan-400">{parseFloat(blockchainBalances.ronBalance).toFixed(4)}</div>
+                      
+                      {/* Testnet Faucet */}
+                      <div className="mt-3 pt-3 border-t border-gray-600">
+                        <div className="text-xs text-gray-400 mb-2">🚰 Testnet Faucet</div>
+                        <div className="flex gap-2">
+                          <a
+                            href="https://faucet.roninchain.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 text-xs bg-cyan-600 hover:bg-cyan-500 px-3 py-2 rounded text-center"
+                          >
+                            Get Free RON
+                          </a>
+                          <button
+                            onClick={async () => {
+                              if (!signer || !address) return;
+                              try {
+                                const { ethers } = await import('ethers');
+                                const AeloriaTokenABI = (await import('@/lib/abis/AeloriaToken.json')).default;
+                                const { CONTRACTS } = await import('@/config/contracts');
+                                const aethContract = new ethers.Contract(CONTRACTS.AETH_TOKEN, AeloriaTokenABI, signer);
+                                const mintAmount = ethers.parseEther('100'); // 100 AETH
+                                const tx = await aethContract.mint(address, mintAmount);
+                                alert('⏳ Minting 100 AETH...\n\nPlease wait for confirmation.');
+                                await tx.wait();
+                                alert('✅ Successfully minted 100 AETH!');
+                                await fetchBlockchainBalances();
+                              } catch (error: any) {
+                                console.error('Mint error:', error);
+                                alert(`❌ Failed to mint AETH:\n${error.message}\n\nNote: Only contract owner can mint tokens.`);
+                              }
+                            }}
+                            className="flex-1 text-xs bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded"
+                          >
+                            Get Free AETH
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
 
