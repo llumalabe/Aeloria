@@ -1,0 +1,17 @@
+{
+  "network": "ronin-testnet",
+  "chainId": "2021",
+  "deployer": "0x40c078F1665677d3918Ec47F382fb9F581fADE56",
+  "timestamp": "2025-10-29T17:32:23.003Z",
+  "contracts": {
+    "AeloriaToken": {
+      "address": "0x6e937B8dF644fbbD663058323337179863866d41",
+      "initialSupply": "1000000000.0"
+    },
+    "WalletManager": {
+      "address": "0x9fDF58EAf8197237b432e4901391D804E156e4c9",
+      "aethTokenAddress": "0x6e937B8dF644fbbD663058323337179863866d41",
+      "withdrawalFee": "5%"
+    }
+  }
+}

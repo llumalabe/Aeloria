@@ -18,14 +18,14 @@ module.exports = {
       url: process.env.RONIN_TESTNET_RPC || "https://saigon-testnet.roninchain.com/rpc",
       chainId: 2021,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 20000000000, // 20 gwei
+      gasPrice: 21000000000, // 21 gwei (minimum required)
     },
     // Ronin Mainnet
     "ronin-mainnet": {
       url: process.env.RONIN_MAINNET_RPC || "https://api.roninchain.com/rpc",
       chainId: 2020,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      gasPrice: 20000000000,
+      gasPrice: 21000000000,
     },
   },
   etherscan: {
@@ -53,7 +53,7 @@ module.exports = {
     ]
   },
   paths: {
-    sources: "./",
+    sources: "./contracts",
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts"
