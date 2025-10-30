@@ -241,7 +241,7 @@ router.post('/:walletAddress/energy/use', async (req, res) => {
 // POST /api/users/:walletAddress/wallet/deposit - Deposit tokens to game
 router.post('/:walletAddress/wallet/deposit', async (req, res) => {
   try {
-    const { amount, tokenType } = req.body; // tokenType: 'AETH' or 'RON'
+    const { amount, tokenType, txHash } = req.body; // tokenType: 'AETH' or 'RON'
     const user = await User.findOne({ walletAddress: req.params.walletAddress.toLowerCase() });
     
     if (!user) {
@@ -262,11 +262,25 @@ router.post('/:walletAddress/wallet/deposit', async (req, res) => {
     } else if (tokenType === 'RON') {
       user.ronTokens += amount;
     }
-    
+
+    // Save transaction history
+    if (txHash) {
+      user.transactions.push({
+        txHash,
+        type: 'deposit',
+        tokenType,
+        amount: amount.toString(),
+        fee: '0',
+        status: 'confirmed',
+        timestamp: new Date(),
+        verified: true
+      });
+    }
+
     await user.save();
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       tokens: user.tokens,
       ronTokens: user.ronTokens,
       message: `Deposited ${amount} ${tokenType}`
@@ -274,12 +288,10 @@ router.post('/:walletAddress/wallet/deposit', async (req, res) => {
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
-});
-
-// POST /api/users/:walletAddress/wallet/withdraw - Withdraw tokens from game
+});// POST /api/users/:walletAddress/wallet/withdraw - Withdraw tokens from game
 router.post('/:walletAddress/wallet/withdraw', async (req, res) => {
   try {
-    const { amount, tokenType } = req.body; // tokenType: 'AETH' or 'RON'
+    const { amount, tokenType, txHash } = req.body; // tokenType: 'AETH' or 'RON'
     const user = await User.findOne({ walletAddress: req.params.walletAddress.toLowerCase() });
     
     if (!user) {
@@ -301,7 +313,7 @@ router.post('/:walletAddress/wallet/withdraw', async (req, res) => {
     if (tokenType === 'AETH') {
       fee = amount * 0.05; // 5% fee
       finalAmount = amount; // User pays from their balance
-      
+
       if (user.tokens < finalAmount) {
         return res.status(400).json({ success: false, error: 'Insufficient AETH tokens' });
       }
@@ -309,10 +321,24 @@ router.post('/:walletAddress/wallet/withdraw', async (req, res) => {
       user.tokens -= finalAmount;
       const amountAfterFee = finalAmount - fee;
 
+      // Save transaction history
+      if (txHash) {
+        user.transactions.push({
+          txHash,
+          type: 'withdraw',
+          tokenType,
+          amount: amountAfterFee.toString(),
+          fee: fee.toString(),
+          status: 'confirmed',
+          timestamp: new Date(),
+          verified: true
+        });
+      }
+
       await user.save();
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         tokens: user.tokens,
         ronTokens: user.ronTokens,
         amountWithdrawn: amountAfterFee,
@@ -325,10 +351,25 @@ router.post('/:walletAddress/wallet/withdraw', async (req, res) => {
       }
 
       user.ronTokens -= amount;
+
+      // Save transaction history
+      if (txHash) {
+        user.transactions.push({
+          txHash,
+          type: 'withdraw',
+          tokenType,
+          amount: amount.toString(),
+          fee: '0',
+          status: 'confirmed',
+          timestamp: new Date(),
+          verified: true
+        });
+      }
+
       await user.save();
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         tokens: user.tokens,
         ronTokens: user.ronTokens,
         amountWithdrawn: amount,
