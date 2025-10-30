@@ -67,33 +67,34 @@ export default function TownPage() {
 
   const fetchBlockchainBalances = async () => {
     if (!address || !provider) return;
-    
+
     try {
       const { ethers } = await import('ethers');
-      const AeloriaTokenABI = (await import('@/lib/abis/AeloriaToken.json')).default;
+      const WalletManagerABI = (await import('@/lib/abis/WalletManager.json')).default;
       const { CONTRACTS } = await import('@/config/contracts');
-      
-      // Get AETH balance
+
+      // Get AETH deposit in WalletManager (not wallet balance)
       let aethBalance = '0';
       try {
-        const aethContract = new ethers.Contract(CONTRACTS.AETH_TOKEN, AeloriaTokenABI, provider);
-        const balance = await aethContract.balanceOf(address);
-        aethBalance = ethers.formatEther(balance || 0);
+        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, provider);
+        const deposit = await walletManager.aethDeposits(address);
+        aethBalance = ethers.formatEther(deposit || 0);
       } catch (error) {
-        console.warn('Failed to fetch AETH balance, defaulting to 0:', error);
+        console.warn('Failed to fetch AETH deposit, defaulting to 0:', error);
         aethBalance = '0';
       }
-      
-      // Get RON balance
+
+      // Get RON deposit in WalletManager (not wallet balance)
       let ronBalance = '0';
       try {
-        const balance = await provider.getBalance(address);
-        ronBalance = ethers.formatEther(balance || 0);
+        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, provider);
+        const deposit = await walletManager.ronDeposits(address);
+        ronBalance = ethers.formatEther(deposit || 0);
       } catch (error) {
-        console.warn('Failed to fetch RON balance, defaulting to 0:', error);
+        console.warn('Failed to fetch RON deposit, defaulting to 0:', error);
         ronBalance = '0';
       }
-      
+
       setBlockchainBalances({
         aethBalance,
         ronBalance
@@ -101,9 +102,7 @@ export default function TownPage() {
     } catch (error) {
       console.error('Failed to fetch balances:', error);
     }
-  };
-
-  const fetchEnergy = async () => {
+  };  const fetchEnergy = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${address}/energy`);
       const data = await res.json();
