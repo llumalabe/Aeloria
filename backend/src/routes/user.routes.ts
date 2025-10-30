@@ -389,12 +389,12 @@ router.get('/:address/transactions', async (req, res) => {
     const { address } = req.params;
     const limit = parseInt(req.query.limit as string) || 50;
 
-    const user = await User.findOne({ 
-      walletAddress: address.toLowerCase() 
+    const user = await User.findOne({
+      walletAddress: address.toLowerCase()
     });
 
     if (!user) {
-      return res.json({ transactions: [] }); // Return empty array instead of 404
+      return res.json({ success: true, transactions: [] }); // Return empty array instead of 404
     }
 
     // Get transactions from user model
@@ -405,10 +405,10 @@ router.get('/:address/transactions', async (req, res) => {
       .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, limit);
 
-    res.json({ transactions: sortedTx });
+    res.json({ success: true, transactions: sortedTx });
   } catch (error: any) {
     console.error('Error fetching transactions:', error);
-    res.status(500).json({ error: 'Failed to fetch transactions' });
+    res.status(500).json({ success: false, error: 'Failed to fetch transactions' });
   }
 });
 export default router;
