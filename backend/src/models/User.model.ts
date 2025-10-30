@@ -20,6 +20,17 @@ export interface IUser extends Document {
   referredBy?: string;
   achievements: string[];
   seasonPassLevel: number;
+  transactions: Array<{
+    txHash: string;
+    type: 'deposit' | 'withdraw';
+    tokenType: 'AETH' | 'RON';
+    amount: string;
+    fee: string;
+    status: 'pending' | 'confirmed' | 'failed';
+    timestamp: Date;
+    blockNumber?: number;
+    verified: boolean;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -113,6 +124,17 @@ const UserSchema: Schema = new Schema(
       type: Number,
       default: 0,
     },
+    transactions: [{
+      txHash: { type: String, required: true },
+      type: { type: String, enum: ['deposit', 'withdraw'], required: true },
+      tokenType: { type: String, enum: ['AETH', 'RON'], required: true },
+      amount: { type: String, required: true },
+      fee: { type: String, default: '0' },
+      status: { type: String, enum: ['pending', 'confirmed', 'failed'], default: 'confirmed' },
+      timestamp: { type: Date, default: Date.now },
+      blockNumber: { type: Number },
+      verified: { type: Boolean, default: false }
+    }],
   },
   {
     timestamps: true,
@@ -128,5 +150,3 @@ UserSchema.pre('save', function(next) {
 });
 
 export default mongoose.model<IUser>('User', UserSchema);
-
-
