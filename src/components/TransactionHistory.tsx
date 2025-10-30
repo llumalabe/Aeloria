@@ -31,28 +31,32 @@ export default function TransactionHistory({ walletAddress }: TransactionHistory
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      
+
       const params = new URLSearchParams();
       if (filter !== 'all') params.append('type', filter);
       if (tokenFilter !== 'all') params.append('tokenType', tokenFilter);
       params.append('limit', '50');
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/${walletAddress}/transactions?${params}`
-      );
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/api/users/${walletAddress}/transactions?${params}`;
+      console.log('Fetching transactions from:', url);
+      
+      const res = await fetch(url);
       const data = await res.json();
+      console.log('Transactions response:', data);
 
-      if (data.success) {
+      // Handle both response formats: { success: true, transactions: [...] } or { transactions: [...] }
+      if (data.transactions) {
+        console.log('Setting transactions:', data.transactions.length, 'items');
         setTransactions(data.transactions);
+      } else {
+        console.warn('No transactions field in response:', data);
       }
     } catch (error) {
       console.error('Failed to fetch transactions:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatDate = (dateString: string) => {
+  };  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
       month: 'short',
