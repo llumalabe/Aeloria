@@ -85,15 +85,29 @@ export default function TownPage() {
       const { CONTRACTS } = await import('@/config/contracts');
       
       // Get AETH balance
-      const aethContract = new ethers.Contract(CONTRACTS.AETH_TOKEN, AeloriaTokenABI, provider);
-      const aethBalance = await aethContract.balanceOf(address);
+      let aethBalance = '0';
+      try {
+        const aethContract = new ethers.Contract(CONTRACTS.AETH_TOKEN, AeloriaTokenABI, provider);
+        const balance = await aethContract.balanceOf(address);
+        aethBalance = ethers.formatEther(balance || 0);
+      } catch (error) {
+        console.warn('Failed to fetch AETH balance, defaulting to 0:', error);
+        aethBalance = '0';
+      }
       
       // Get RON balance
-      const ronBalance = await provider.getBalance(address);
+      let ronBalance = '0';
+      try {
+        const balance = await provider.getBalance(address);
+        ronBalance = ethers.formatEther(balance || 0);
+      } catch (error) {
+        console.warn('Failed to fetch RON balance, defaulting to 0:', error);
+        ronBalance = '0';
+      }
       
       setBlockchainBalances({
-        aethBalance: ethers.formatEther(aethBalance),
-        ronBalance: ethers.formatEther(ronBalance)
+        aethBalance,
+        ronBalance
       });
     } catch (error) {
       console.error('Failed to fetch balances:', error);
@@ -121,6 +135,12 @@ export default function TownPage() {
 
     if (!signer || !address) {
       alert('Please connect your Ronin Wallet first');
+      return;
+    }
+
+    // Check if user has RON for gas fees
+    if (parseFloat(blockchainBalances.ronBalance) < 0.001) {
+      alert('⚠️ Insufficient RON for gas fees!\n\nYou need at least 0.001 RON in your wallet to pay for transaction fees.\n\nGet free testnet RON from:\nhttps://faucet.roninchain.com');
       return;
     }
 
@@ -209,6 +229,12 @@ export default function TownPage() {
 
     if (!signer || !address) {
       alert('Please connect your Ronin Wallet first');
+      return;
+    }
+
+    // Check if user has RON for gas fees
+    if (parseFloat(blockchainBalances.ronBalance) < 0.001) {
+      alert('⚠️ Insufficient RON for gas fees!\n\nYou need at least 0.001 RON in your wallet to pay for transaction fees.\n\nGet free testnet RON from:\nhttps://faucet.roninchain.com');
       return;
     }
 
