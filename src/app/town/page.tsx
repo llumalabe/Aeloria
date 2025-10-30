@@ -187,6 +187,10 @@ export default function TownPage() {
 
           if (backendData.success) {
             alert(`✅ Deposit successful!\nAmount: ${amount} ${selectedToken}\nTransaction: ${txHash}`);
+            
+            // Refresh balances immediately
+            await fetchBlockchainBalances();
+            await refreshUserData();
           } else {
             alert(`⚠️ Blockchain transaction succeeded but backend verification failed:\n${backendData.error}\n\nYour tokens are safe on-chain. Contact support with this TX: ${txHash}`);
           }
@@ -197,7 +201,7 @@ export default function TownPage() {
 
         setAmount('');
         setWalletStep('select-action');
-        
+
         // Refresh balances
         await fetchBlockchainBalances();
         await refreshUserData();
@@ -271,6 +275,10 @@ export default function TownPage() {
               ? `\nFee: ${backendData.fee} ${selectedToken}`
               : '';
             alert(`✅ Withdrawal successful!\nAmount: ${amount} ${selectedToken}${feeMsg}\nTransaction: ${txHash}`);
+            
+            // Refresh balances immediately
+            await fetchBlockchainBalances();
+            await refreshUserData();
           } else {
             alert(`⚠️ Blockchain transaction succeeded but backend verification failed:\n${backendData.error}\n\nYour tokens were withdrawn safely. Contact support with this TX: ${txHash}`);
           }
@@ -281,7 +289,7 @@ export default function TownPage() {
 
         setAmount('');
         setWalletStep('select-action');
-        
+
         // Refresh balances
         await fetchBlockchainBalances();
         await refreshUserData();
