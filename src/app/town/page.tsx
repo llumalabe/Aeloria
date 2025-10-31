@@ -83,7 +83,7 @@ export default function TownPage() {
       // Get AETH deposit in WalletManager (not wallet balance)
       let aethBalance = '0';
       try {
-        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, provider);
+        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, provider);
         const deposit = await walletManager.aethDeposits(address);
         aethBalance = ethers.formatEther(deposit || 0);
         console.log('✅ AETH deposit:', aethBalance);
@@ -95,7 +95,7 @@ export default function TownPage() {
       // Get RON deposit in WalletManager (not wallet balance)
       let ronBalance = '0';
       try {
-        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, provider);
+        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, provider);
         const deposit = await walletManager.ronDeposits(address);
         ronBalance = ethers.formatEther(deposit || 0);
         console.log('✅ RON deposit:', ronBalance);
@@ -153,8 +153,8 @@ export default function TownPage() {
       
       if (selectedToken === 'AETH') {
         // Deposit AETH
-        const aethContract = new ethers.Contract(CONTRACTS.AETH_TOKEN, AeloriaTokenABI, signer);
-        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, signer);
+        const aethContract = new ethers.Contract(CONTRACTS.AETH_TOKEN, AeloriaTokenABI.abi, signer);
+        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, signer);
         
         const amountWei = ethers.parseEther(amount);
         
@@ -168,7 +168,7 @@ export default function TownPage() {
         txHash = receipt.hash;
       } else {
         // Deposit RON
-        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, signer);
+        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, signer);
         const amountWei = ethers.parseEther(amount);
         
         const depositTx = await walletManager.depositRon({ value: amountWei });
@@ -256,7 +256,7 @@ export default function TownPage() {
       const WalletManagerABI = (await import('@/lib/abis/WalletManager.json')).default;
       const { CONTRACTS } = await import('@/config/contracts');
 
-      const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, signer);
+      const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, signer);
       const amountWei = ethers.parseEther(amount);      let txHash: string;
       
         if (selectedToken === 'AETH') {
