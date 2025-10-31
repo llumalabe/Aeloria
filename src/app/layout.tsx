@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";   
+import { Inter, Cinzel } from "next/font/google";   
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import WalletReconnect from "@/components/WalletReconnect";
-import Sidebar from "@/components/Sidebar";
+import ClientLayout from "@/components/ClientLayout";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const cinzel = Cinzel({
+  variable: "--font-cinzel",
   subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -29,19 +30,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${cinzel.variable} antialiased`}
       >
         <WalletReconnect />
-        <div className="flex min-h-screen bg-black text-white">
-          <Sidebar />
-          <div className="flex flex-col flex-1 min-h-screen">
-            <Header />
-            <main className="flex-grow pt-20">
-              {children}
-            </main>
-            <Footer />
-          </div>
-        </div>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );

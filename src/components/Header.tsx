@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { useWallet, type WalletType } from '@/hooks/useWallet';
 import { useState, useEffect } from 'react';
 
-export default function Header() {
+interface HeaderProps {
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+}
+
+export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
   const { address, connect, disconnect } = useWallet();
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
@@ -48,6 +53,19 @@ export default function Header() {
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-20">
+            {/* Hamburger Button - Mobile Only */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden p-2 text-yellow-400 hover:text-yellow-300 transition-colors"
+              aria-label="Toggle menu"
+            >
+              <div className="w-6 h-5 flex flex-col justify-between">
+                <span className={`block h-0.5 w-6 bg-current transition-all ${sidebarOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+                <span className={`block h-0.5 w-6 bg-current transition-all ${sidebarOpen ? 'opacity-0' : ''}`}></span>
+                <span className={`block h-0.5 w-6 bg-current transition-all ${sidebarOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+              </div>
+            </button>
+
             {/* Logo - Mobile/Tablet Only (Desktop uses Sidebar) */}
             <Link href="/" className="flex items-center gap-3 group lg:hidden">
               <div className="text-4xl group-hover:scale-110 transition-transform">⚔️</div>

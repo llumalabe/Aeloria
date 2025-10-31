@@ -5,12 +5,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@/hooks/useWallet';
 
-export default function Sidebar() {
-  const [isOpen, setIsOpen] = useState(false);
+interface SidebarProps {
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+}
+
+export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname();
   const { address, disconnect } = useWallet();
 
-  const menuItems = [
+  // Menu items based on login status
+  const menuItems = address ? [
     { href: '/', label: 'Home', icon: '🏠' },
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/town', label: 'Town', icon: '🏰' },
@@ -18,6 +23,8 @@ export default function Sidebar() {
     { href: '/pvp', label: 'PvP Arena', icon: '⚔️' },
     { href: '/gacha', label: 'Summon', icon: '🎲' },
     { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
+  ] : [
+    { href: '/', label: 'Home', icon: '🏠' },
   ];
 
   const isActive = (href: string) => {
@@ -27,19 +34,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Hamburger Button - Mobile Only */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 lg:hidden bg-purple-900/90 backdrop-blur-sm p-3 rounded-lg border-2 border-yellow-500/50 hover:bg-purple-800 transition-all"
-        aria-label="Toggle menu"
-      >
-        <div className="w-6 h-5 flex flex-col justify-between">
-          <span className={`block h-0.5 w-6 bg-yellow-400 transition-all ${isOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-          <span className={`block h-0.5 w-6 bg-yellow-400 transition-all ${isOpen ? 'opacity-0' : ''}`}></span>
-          <span className={`block h-0.5 w-6 bg-yellow-400 transition-all ${isOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
-        </div>
-      </button>
-
+      {/* Hamburger Button - Mobile Only (Moved to Header, keeping this for reference) */}
       {/* Overlay - Mobile Only */}
       {isOpen && (
         <div
