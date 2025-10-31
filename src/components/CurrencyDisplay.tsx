@@ -1,6 +1,7 @@
 'use client';
 
 import { useGameState } from '@/hooks/useGameState';
+import RonIcon from './RonIcon';
 
 export default function CurrencyDisplay() {
   const { user } = useGameState();

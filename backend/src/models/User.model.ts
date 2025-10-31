@@ -56,7 +56,7 @@ const UserSchema: Schema = new Schema(
     },
     gold: {
       type: Number,
-      default: 1000,
+      default: 0,
       min: 0,
     },
     premium: {

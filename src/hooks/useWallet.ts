@@ -79,7 +79,29 @@ export const useWallet = create<WalletState>()(
       if (!provider) {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
-          throw new Error('Please open this page in Ronin Wallet or MetaMask app browser');
+          // Mobile: Show deep link options
+          const currentUrl = window.location.href;
+          const roninDeepLink = `ronin://browser?url=${encodeURIComponent(currentUrl)}`;
+          const metamaskDeepLink = `https://metamask.app.link/dapp/${encodeURIComponent(currentUrl)}`;
+          
+          // Try Ronin Wallet first
+          const tryRonin = confirm(
+            '🎮 Aeloria requires a Web3 wallet\n\n' +
+            'Click OK to open in Ronin Wallet\n' +
+            'or Cancel to try MetaMask'
+          );
+          
+          if (tryRonin) {
+            window.location.href = roninDeepLink;
+            // Fallback to Ronin download page
+            setTimeout(() => {
+              window.location.href = 'https://wallet.roninchain.com/';
+            }, 2000);
+          } else {
+            window.location.href = metamaskDeepLink;
+          }
+          
+          throw new Error('Redirecting to wallet app...');
         } else {
           throw new Error('Please install Ronin Wallet or MetaMask extension');
         }

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import TransactionHistory from '@/components/TransactionHistory';
 import WalletModal from '@/components/WalletModal';
+import RonIcon from '@/components/RonIcon';
 
 export default function TownPage() {
   const { address, provider, signer, reconnect } = useWallet();
@@ -646,7 +647,9 @@ export default function TownPage() {
                           <div className="text-xs text-gray-500 mt-1">Deposit & withdraw anytime</div>
                         </div>
                         <div>
-                          <div className="text-xs text-gray-400">💰 RON Balance</div>
+                          <div className="text-xs text-gray-400 flex items-center gap-1">
+                            <RonIcon size={12} /> RON Balance
+                          </div>
                           <div className="text-2xl font-bold text-blue-400">{parseFloat(blockchainBalances.ronBalance).toFixed(4)} RON</div>
                           <div className="text-xs text-gray-500 mt-1">For gas fees & Shop purchases</div>
                         </div>
@@ -706,7 +709,7 @@ export default function TownPage() {
                         }}
                         className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-6 rounded-lg transition-all flex flex-col items-center justify-center"
                       >
-                        <div className="text-4xl mb-2">💰</div>
+                        <div className="mb-2"><RonIcon size={40} /></div>
                         <div className="text-lg">RON</div>
                       </button>
                     </div>
@@ -745,7 +748,7 @@ export default function TownPage() {
                         }}
                         className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-6 rounded-lg transition-all flex flex-col items-center justify-center"
                       >
-                        <div className="text-4xl mb-2">💰</div>
+                        <div className="mb-2"><RonIcon size={40} /></div>
                         <div className="text-lg">RON</div>
                         <div className="text-xs text-green-300 mt-1">No fee</div>
                       </button>
