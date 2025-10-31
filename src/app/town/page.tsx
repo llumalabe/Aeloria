@@ -21,7 +21,7 @@ export default function TownPage() {
   const [lastRefresh, setLastRefresh] = useState(Date.now());
   
   // Wallet states (for old UI - will be removed)
-  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'withdraw' | 'convert'>('select-action');
+  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'deposit-aeth' | 'withdraw' | 'convert'>('select-action');
   const [selectedToken, setSelectedToken] = useState<'AETH' | 'RON'>('AETH');
   const [amount, setAmount] = useState('');
   const [walletLoading, setWalletLoading] = useState(false);
@@ -206,6 +206,79 @@ export default function TownPage() {
     } catch (error: any) {
       console.error('Deposit error:', error);
       alert(`❌ Deposit failed: ${error.message || 'Unknown error'}`);
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
+  const handleDepositAeth = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
+    if (!signer || !address) {
+      alert('Please connect your Ronin Wallet first');
+      return;
+    }
+
+    setWalletLoading(true);
+    try {
+      const { ethers } = await import('ethers');
+      const AethTokenABI = (await import('@/lib/abis/AeloriaToken.json')).default;
+      const WalletManagerABI = (await import('@/lib/abis/WalletManager.json')).default;
+      const { CONTRACTS } = await import('@/config/contracts');
+      
+      const aethToken = new ethers.Contract(CONTRACTS.AETH_TOKEN, AethTokenABI.abi, signer);
+      const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, signer);
+      const amountWei = ethers.parseEther(amount);
+
+      // Step 1: Check wallet balance
+      const walletBalance = await aethToken.balanceOf(address);
+      if (walletBalance < amountWei) {
+        alert(`❌ Insufficient AETH in wallet!\n\nYou have: ${ethers.formatEther(walletBalance)} AETH\nNeed: ${amount} AETH`);
+        setWalletLoading(false);
+        return;
+      }
+
+      // Step 2: Check allowance
+      const currentAllowance = await aethToken.allowance(address, CONTRACTS.WALLET_MANAGER);
+      
+      if (currentAllowance < amountWei) {
+        alert('📝 Step 1/2: Please approve AETH spending...');
+        const approveTx = await aethToken.approve(CONTRACTS.WALLET_MANAGER, amountWei);
+        await approveTx.wait();
+        alert('✅ Approval confirmed! Now depositing...');
+      }
+
+      // Step 3: Deposit to WalletManager
+      const depositTx = await walletManager.depositAeth(amountWei);
+      const receipt = await depositTx.wait();
+      const txHash: string = receipt.hash;
+
+      if (txHash) {
+        alert(`✅ AETH Deposit successful!\n\nAmount: ${amount} AETH\nTransaction: ${txHash}\n\nYou can now withdraw or use it in-game!`);
+        
+        // Refresh balances
+        await fetchBlockchainBalances();
+        await refreshUserData();
+        
+        setAmount('');
+        setWalletStep('select-action');
+      }
+    } catch (error: any) {
+      console.error('❌ Deposit AETH error:', error);
+      
+      let errorMessage = '';
+      if (error.code === 'ACTION_REJECTED') {
+        errorMessage = 'Transaction was rejected by user';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient RON for gas fees';
+      } else {
+        errorMessage = error.message || 'Unknown error';
+      }
+      
+      alert(`❌ Deposit failed: ${errorMessage}`);
     } finally {
       setWalletLoading(false);
     }
@@ -538,6 +611,16 @@ export default function TownPage() {
                   <div className="space-y-3">
                     <h3 className="text-xl font-bold text-white mb-4">💰 Wallet</h3>
                     <button
+                      onClick={() => {
+                        setWalletStep('deposit-aeth');
+                        setSelectedToken('AETH');
+                      }}
+                      disabled={!signer || !provider}
+                      className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
+                    >
+                      💎 Deposit AETH (From Wallet)
+                    </button>
+                    <button
                       onClick={() => setWalletStep('deposit')}
                       disabled={!signer || !provider}
                       className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
@@ -562,11 +645,14 @@ export default function TownPage() {
                 )}
 
                 {/* Step 2 & 3: Deposit/Withdraw/Convert Form */}
-                {(walletStep === 'deposit' || walletStep === 'withdraw' || walletStep === 'convert') && (
+                {(walletStep === 'deposit' || walletStep === 'deposit-aeth' || walletStep === 'withdraw' || walletStep === 'convert') && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xl font-bold text-white">
-                        {walletStep === 'deposit' ? '📥 Deposit RON' : walletStep === 'convert' ? '🔄 Convert AETH' : '📤 Withdraw AETH'}
+                        {walletStep === 'deposit' ? '📥 Deposit RON' : 
+                         walletStep === 'deposit-aeth' ? '💎 Deposit AETH' :
+                         walletStep === 'convert' ? '🔄 Convert AETH' : 
+                         '📤 Withdraw AETH'}
                       </h3>
                       <button
                         onClick={() => {
@@ -582,6 +668,15 @@ export default function TownPage() {
                     {walletStep === 'deposit' && (
                       <div className="bg-blue-900/20 border border-blue-500/30 rounded p-3 text-sm text-blue-200">
                         💰 Deposit RON to use in Shop for buying packs and items
+                      </div>
+                    )}
+
+                    {walletStep === 'deposit-aeth' && (
+                      <div className="bg-cyan-900/20 border border-cyan-500/30 rounded p-3 text-sm text-cyan-200">
+                        💎 Deposit AETH from your wallet to WalletManager contract
+                        <div className="mt-2 text-xs">
+                          This allows you to withdraw later or convert back to in-game currency
+                        </div>
                       </div>
                     )}
 
@@ -651,17 +746,30 @@ export default function TownPage() {
 
                     {/* Confirm Button */}
                     <button
-                      onClick={walletStep === 'deposit' ? handleDeposit : walletStep === 'convert' ? handleConvert : handleWithdraw}
+                      onClick={
+                        walletStep === 'deposit' ? handleDeposit : 
+                        walletStep === 'deposit-aeth' ? handleDepositAeth :
+                        walletStep === 'convert' ? handleConvert : 
+                        handleWithdraw
+                      }
                       disabled={walletLoading || !amount || parseFloat(amount) <= 0}
                       className={`w-full font-bold py-4 rounded-lg transition-all ${
                         walletStep === 'deposit'
                           ? 'bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600'
+                          : walletStep === 'deposit-aeth'
+                          ? 'bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600'
                           : walletStep === 'convert'
                           ? 'bg-purple-600 hover:bg-purple-500 disabled:bg-gray-600'
                           : 'bg-green-600 hover:bg-green-500 disabled:bg-gray-600'
                       } text-white`}
                     >
-                      {walletLoading ? '⏳ Processing...' : `Confirm ${walletStep === 'deposit' ? 'Deposit' : walletStep === 'convert' ? 'Convert' : 'Withdraw'}`}
+                      {walletLoading ? '⏳ Processing...' : 
+                       `Confirm ${
+                         walletStep === 'deposit' ? 'Deposit RON' : 
+                         walletStep === 'deposit-aeth' ? 'Deposit AETH' :
+                         walletStep === 'convert' ? 'Convert' : 
+                         'Withdraw'
+                       }`}
                     </button>
                   </div>
                 )}
