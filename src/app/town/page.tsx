@@ -66,12 +66,19 @@ export default function TownPage() {
   }, [address, provider, signer]);
 
   const fetchBlockchainBalances = async () => {
-    if (!address || !provider) return;
+    if (!address || !provider) {
+      console.log('❌ Cannot fetch balances - missing address or provider:', { address, provider: !!provider });
+      return;
+    }
+
+    console.log('🔍 Fetching blockchain balances for:', address);
 
     try {
       const { ethers } = await import('ethers');
       const WalletManagerABI = (await import('@/lib/abis/WalletManager.json')).default;
       const { CONTRACTS } = await import('@/config/contracts');
+
+      console.log('📍 WalletManager address:', CONTRACTS.WALLET_MANAGER);
 
       // Get AETH deposit in WalletManager (not wallet balance)
       let aethBalance = '0';
@@ -79,6 +86,7 @@ export default function TownPage() {
         const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, provider);
         const deposit = await walletManager.aethDeposits(address);
         aethBalance = ethers.formatEther(deposit || 0);
+        console.log('✅ AETH deposit:', aethBalance);
       } catch (error) {
         console.warn('Failed to fetch AETH deposit, defaulting to 0:', error);
         aethBalance = '0';
@@ -90,11 +98,13 @@ export default function TownPage() {
         const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, provider);
         const deposit = await walletManager.ronDeposits(address);
         ronBalance = ethers.formatEther(deposit || 0);
+        console.log('✅ RON deposit:', ronBalance);
       } catch (error) {
         console.warn('Failed to fetch RON deposit, defaulting to 0:', error);
         ronBalance = '0';
       }
 
+      console.log('💰 Setting balances:', { aethBalance, ronBalance });
       setBlockchainBalances({
         aethBalance,
         ronBalance
