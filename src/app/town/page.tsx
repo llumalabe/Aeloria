@@ -19,7 +19,7 @@ export default function TownPage() {
   const [blockchainBalances, setBlockchainBalances] = useState({ aethBalance: '0', ronBalance: '0' });
   
   // Wallet states
-  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'withdraw'>('select-action');
+  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'withdraw' | 'convert'>('select-action');
   const [selectedToken, setSelectedToken] = useState<'AETH' | 'RON'>('AETH');
   const [amount, setAmount] = useState('');
   const [walletLoading, setWalletLoading] = useState(false);
@@ -142,15 +142,13 @@ export default function TownPage() {
       const WalletManagerABI = (await import('@/lib/abis/WalletManager.json')).default;
       const { CONTRACTS } = await import('@/config/contracts');
       
-      let txHash: string;
-      
       // Deposit RON only
       const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, signer);
       const amountWei = ethers.parseEther(amount);
       
       const depositTx = await walletManager.depositRon({ value: amountWei });
       const receipt = await depositTx.wait();
-      const txHash = receipt.hash;
+      const txHash: string = receipt.hash;
 
       if (txHash) {
         // Send transaction to backend for verification

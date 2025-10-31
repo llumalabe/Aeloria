@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import User from '../models/User.model';
 import Character, { CharacterClass } from '../models/Character.model';
 
