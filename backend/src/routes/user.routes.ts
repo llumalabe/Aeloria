@@ -378,6 +378,58 @@ router.post('/:walletAddress/wallet/withdraw', async (req, res) => {
       });
     }
   } catch (error: any) {
+    console.error('Withdraw error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Convert in-game AETH to withdrawable (deduct from DB, will be deposited to contract)
+router.post('/:address/wallet/convert', async (req: Request, res: Response) => {
+  try {
+    const { address } = req.params;
+    const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid amount' });
+    }
+
+    const user = await User.findOne({ walletAddress: address.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    // Check if user has enough in-game AETH
+    if (user.tokens < amount) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Insufficient in-game AETH. You have ${user.tokens}, need ${amount}` 
+      });
+    }
+
+    // Deduct from in-game balance
+    user.tokens -= amount;
+
+    // Record transaction
+    user.transactions.push({
+      txHash: `convert-${Date.now()}`,
+      type: 'convert',
+      tokenType: 'AETH',
+      amount: amount.toString(),
+      fee: '0',
+      status: 'confirmed',
+      timestamp: new Date(),
+      verified: true
+    });
+
+    await user.save();
+
+    res.json({
+      success: true,
+      tokens: user.tokens,
+      convertedAmount: amount,
+      message: `Converted ${amount} in-game AETH to withdrawable`
+    });
+  } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
 });

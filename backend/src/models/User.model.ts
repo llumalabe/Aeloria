@@ -22,7 +22,7 @@ export interface IUser extends Document {
   seasonPassLevel: number;
   transactions: Array<{
     txHash: string;
-    type: 'deposit' | 'withdraw';
+    type: 'deposit' | 'withdraw' | 'convert';
     tokenType: 'AETH' | 'RON';
     amount: string;
     fee: string;
@@ -126,7 +126,7 @@ const UserSchema: Schema = new Schema(
     },
     transactions: [{
       txHash: { type: String, required: true },
-      type: { type: String, enum: ['deposit', 'withdraw'], required: true },
+      type: { type: String, enum: ['deposit', 'withdraw', 'convert'], required: true },
       tokenType: { type: String, enum: ['AETH', 'RON'], required: true },
       amount: { type: String, required: true },
       fee: { type: String, default: '0' },
