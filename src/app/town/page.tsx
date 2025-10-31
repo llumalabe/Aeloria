@@ -19,6 +19,11 @@ export default function TownPage() {
   // Blockchain balances with auto-refresh
   const [blockchainBalances, setBlockchainBalances] = useState({ aethBalance: '0', ronBalance: '0' });
   const [lastRefresh, setLastRefresh] = useState(Date.now());
+  
+  // Wallet states (for old UI - will be removed)
+  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'withdraw' | 'convert'>('select-action');
+  const [amount, setAmount] = useState('');
+  const [walletLoading, setWalletLoading] = useState(false);
 
   useEffect(() => {
     if (!address) {
@@ -370,15 +375,18 @@ export default function TownPage() {
   };
 
   // Wrapper functions for WalletModal
-  const handleModalDeposit = async (amount: string) => {
+  const handleModalDeposit = async (modalAmount: string) => {
+    setAmount(modalAmount);
     await handleDeposit();
   };
 
-  const handleModalConvert = async (amount: string) => {
+  const handleModalConvert = async (modalAmount: string) => {
+    setAmount(modalAmount);
     await handleConvert();
   };
 
-  const handleModalWithdraw = async (amount: string) => {
+  const handleModalWithdraw = async (modalAmount: string) => {
+    setAmount(modalAmount);
     await handleWithdraw();
   };
 
