@@ -245,13 +245,13 @@ export class BlockchainWallet {
 
     this.aethContract = new ethers.Contract(
       CONTRACTS.AETH_TOKEN,
-      AeloriaTokenABI,
+      AeloriaTokenABI.abi,
       this.signer
     );
 
     this.walletContract = new ethers.Contract(
       CONTRACTS.WALLET_MANAGER,
-      WalletManagerABI,
+      WalletManagerABI.abi,
       this.signer
     );
   }
