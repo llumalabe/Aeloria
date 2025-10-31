@@ -663,59 +663,104 @@ export default function TownPage() {
                   <div className="space-y-3">
                     <h3 className="text-xl font-bold text-white mb-4">💰 Wallet</h3>
                     
-                    {/* Deposit Section */}
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-semibold text-gray-400 uppercase">📥 Deposit</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => setWalletStep('deposit-select')}
+                        disabled={!signer || !provider}
+                        className="bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 rounded-lg transition-all"
+                      >
+                        � Deposit
+                      </button>
+                      <button
+                        onClick={() => setWalletStep('withdraw-select')}
+                        disabled={!signer || !provider}
+                        className="bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 rounded-lg transition-all"
+                      >
+                        � Withdraw
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2a: Select Token for Deposit */}
+                {walletStep === 'deposit-select' && (
+                  <div className="space-y-3">
+                    <h3 className="text-xl font-bold text-white mb-2">📥 Deposit</h3>
+                    <p className="text-sm text-gray-400 mb-4">Select token to deposit</p>
+                    
+                    <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={() => {
                           setWalletStep('deposit-aeth');
                           setSelectedToken('AETH');
                         }}
-                        disabled={!signer || !provider}
-                        className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
+                        className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-6 rounded-lg transition-all flex flex-col items-center justify-center"
                       >
-                        💎 Deposit AETH
+                        <div className="text-4xl mb-2">💎</div>
+                        <div className="text-lg">AETH</div>
                       </button>
                       <button
                         onClick={() => {
                           setWalletStep('deposit');
                           setSelectedToken('RON');
                         }}
-                        disabled={!signer || !provider}
-                        className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
+                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-6 rounded-lg transition-all flex flex-col items-center justify-center"
                       >
-                        � Deposit RON
+                        <div className="text-4xl mb-2">💰</div>
+                        <div className="text-lg">RON</div>
                       </button>
                     </div>
 
-                    {/* Withdraw Section */}
-                    <div className="space-y-2 pt-4 border-t border-gray-600">
-                      <h4 className="text-sm font-semibold text-gray-400 uppercase">📤 Withdraw</h4>
+                    <button
+                      onClick={() => setWalletStep('select-action')}
+                      className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 rounded-lg transition-all mt-2"
+                    >
+                      ← Back
+                    </button>
+                  </div>
+                )}
+
+                {/* Step 2b: Select Token for Withdraw */}
+                {walletStep === 'withdraw-select' && (
+                  <div className="space-y-3">
+                    <h3 className="text-xl font-bold text-white mb-2">📤 Withdraw</h3>
+                    <p className="text-sm text-gray-400 mb-4">Select token to withdraw</p>
+                    
+                    <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={() => {
                           setWalletStep('withdraw');
                           setSelectedToken('AETH');
                         }}
-                        disabled={!signer || !provider}
-                        className="w-full bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
+                        className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-6 rounded-lg transition-all flex flex-col items-center justify-center"
                       >
-                        💎 Withdraw AETH
+                        <div className="text-4xl mb-2">💎</div>
+                        <div className="text-lg">AETH</div>
+                        <div className="text-xs text-yellow-300 mt-1">5% fee</div>
                       </button>
                       <button
                         onClick={() => {
                           setWalletStep('withdraw-ron');
                           setSelectedToken('RON');
                         }}
-                        disabled={!signer || !provider}
-                        className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
+                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-6 rounded-lg transition-all flex flex-col items-center justify-center"
                       >
-                        � Withdraw RON
+                        <div className="text-4xl mb-2">💰</div>
+                        <div className="text-lg">RON</div>
+                        <div className="text-xs text-green-300 mt-1">No fee</div>
                       </button>
                     </div>
+
+                    <button
+                      onClick={() => setWalletStep('select-action')}
+                      className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 rounded-lg transition-all mt-2"
+                    >
+                      ← Back
+                    </button>
                   </div>
                 )}
 
-                {/* Step 2 & 3: Deposit/Withdraw Form */}
+                {/* Step 3: Deposit/Withdraw Form */}
                 {(walletStep === 'deposit' || walletStep === 'deposit-aeth' || walletStep === 'withdraw' || walletStep === 'withdraw-ron') && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -727,7 +772,12 @@ export default function TownPage() {
                       </h3>
                       <button
                         onClick={() => {
-                          setWalletStep('select-action');
+                          // Back to token selection
+                          if (walletStep === 'deposit' || walletStep === 'deposit-aeth') {
+                            setWalletStep('deposit-select');
+                          } else {
+                            setWalletStep('withdraw-select');
+                          }
                           setAmount('');
                         }}
                         className="text-gray-400 hover:text-white"
