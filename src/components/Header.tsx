@@ -48,114 +48,68 @@ export default function Header() {
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-20">
-            {/* Logo & Game Name */}
-            <Link href="/" className="flex items-center gap-3 group">
+            {/* Logo - Mobile/Tablet Only (Desktop uses Sidebar) */}
+            <Link href="/" className="flex items-center gap-3 group lg:hidden">
               <div className="text-4xl group-hover:scale-110 transition-transform">⚔️</div>
               <div>
                 <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
                   Aeloria
                 </h1>
-                <p className="text-xs text-gray-400">Guardians of the Eternal Sigils</p>
+                <p className="text-xs text-gray-400">Guardians</p>
               </div>
             </Link>
 
-            {/* Navigation Menu */}
-            <nav className="hidden md:flex items-center gap-6">
+            {/* Spacer for desktop */}
+            <div className="hidden lg:block flex-1"></div>
+
+            {/* Wallet Connection - Always visible */}
+            <div className="flex items-center gap-4">
               {address ? (
-                // Logged In Menu
-                <>
-                  <Link
-                    href="/"
-                    className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/town"
-                    className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
-                  >
-                    Town
-                  </Link>
-                  <Link
-                    href="/shop"
-                    className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
-                  >
-                    Shop
-                  </Link>
-                  <Link
-                    href="/marketplace"
-                    className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
-                  >
-                    Marketplace
-                  </Link>
-                  <Link
-                    href="/crafting"
-                    className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
-                  >
-                    Crafting
-                  </Link>
-                  <Link
-                    href="/rewards"
-                    className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
-                  >
-                    Rewards
-                  </Link>
-                  <Link
-                    href="/ranking"
-                    className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
-                  >
-                    Ranking
-                  </Link>                  {/* Wallet Dropdown */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                      className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-4 py-2 rounded-lg font-bold hover:from-yellow-600 hover:to-orange-600 transition-all"
-                    >
-                      <span className="text-lg">👛</span>
-                      <span className="hidden lg:inline">{shortAddress}</span>
-                    </button>
-
-                    {showAccountDropdown && (
-                      <div className="absolute right-0 mt-2 w-48 bg-gray-800 border-2 border-yellow-500/50 rounded-lg shadow-xl overflow-hidden">
-                        <div className="p-3 border-b border-gray-700">
-                          <p className="text-xs text-gray-400">Connected Wallet</p>
-                          <p className="text-sm text-white font-mono">{shortAddress}</p>
-                        </div>
-                        <button
-                          onClick={handleDisconnect}
-                          className="w-full px-4 py-3 text-left text-red-400 hover:bg-gray-700 transition-colors font-medium"
-                        >
-                          🚪 Disconnect
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                // Not Logged In Menu
-                <>
-                  <Link 
-                    href="/" 
-                    className="text-gray-300 hover:text-yellow-400 transition-colors font-medium"
-                  >
-                    Home
-                  </Link>
+                /* Connected Account */
+                <div className="relative">
                   <button
-                    onClick={() => setShowWalletModal(true)}
-                    className="bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-6 py-2 rounded-lg font-bold hover:from-yellow-600 hover:to-orange-600 transition-all"
+                    onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+                    className="flex items-center gap-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-4 py-2 rounded-lg border-2 border-yellow-500/50 transition-all"
                   >
-                    Login
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="font-mono text-sm">{shortAddress}</span>
                   </button>
-                </>
-              )}
-            </nav>
 
-            {/* Mobile Menu Button */}
-            <button className="md:hidden text-yellow-400">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+                  {/* Dropdown */}
+                  {showAccountDropdown && (
+                    <div className="absolute right-0 mt-2 w-64 bg-gray-900 border-2 border-yellow-500/30 rounded-lg shadow-xl overflow-hidden">
+                      <div className="p-4 border-b border-gray-700">
+                        <p className="text-xs text-gray-400 mb-1">Connected Wallet</p>
+                        <p className="text-sm font-mono text-white break-all">{address}</p>
+                      </div>
+                      
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setShowAccountDropdown(false)}
+                        className="block px-4 py-3 hover:bg-gray-800 transition-colors text-gray-300 hover:text-white"
+                      >
+                        � Dashboard
+                      </Link>
+                      
+                      <button
+                        onClick={handleDisconnect}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-800 transition-colors text-red-400 hover:text-red-300"
+                      >
+                        🚪 Disconnect
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Connect Wallet Button */
+                <button
+                  onClick={() => setShowWalletModal(true)}
+                  className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold px-6 py-3 rounded-lg transition-all transform hover:scale-105"
+                >
+                  🔗 Connect Wallet
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>

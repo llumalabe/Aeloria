@@ -47,7 +47,8 @@ export default function TransactionHistory({ walletAddress }: TransactionHistory
       // Handle both response formats: { success: true, transactions: [...] } or { transactions: [...] }
       if (data.transactions) {
         console.log('Setting transactions:', data.transactions.length, 'items');
-        setTransactions(data.transactions);
+        // Reverse to show latest first
+        setTransactions(data.transactions.reverse());
       } else {
         console.warn('No transactions field in response:', data);
       }
