@@ -249,17 +249,21 @@ export default function TownPage() {
       const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI, signer);
       const amountWei = ethers.parseEther(amount);      let txHash: string;
       
-      if (selectedToken === 'AETH') {
-        const withdrawTx = await walletManager.withdrawAeth(amountWei);
-        const receipt = await withdrawTx.wait();
-        txHash = receipt.hash;
-      } else {
-        const withdrawTx = await walletManager.withdrawRon(amountWei);
-        const receipt = await withdrawTx.wait();
-        txHash = receipt.hash;
-      }
-
-      if (txHash) {
+        if (selectedToken === 'AETH') {
+          console.log('🔹 Withdrawing AETH:', amount);
+          const withdrawTx = await walletManager.withdrawAeth(amountWei);
+          console.log('🔹 TX sent:', withdrawTx.hash);
+          const receipt = await withdrawTx.wait();
+          console.log('🔹 TX confirmed:', receipt);
+          txHash = receipt.hash;
+        } else {
+          console.log('🔹 Withdrawing RON:', amount);
+          const withdrawTx = await walletManager.withdrawRon(amountWei);
+          console.log('🔹 TX sent:', withdrawTx.hash);
+          const receipt = await withdrawTx.wait();
+          console.log('🔹 TX confirmed:', receipt);
+          txHash = receipt.hash;
+        }      if (txHash) {
         // Send transaction to backend for verification
         try {
           const backendRes = await fetch(
@@ -302,8 +306,26 @@ export default function TownPage() {
         await refreshUserData();
       }
     } catch (error: any) {
-      console.error('Withdraw error:', error);
-      alert(`❌ Withdrawal failed: ${error.message || 'Unknown error'}`);
+      console.error('❌ Withdraw error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        data: error.data,
+        reason: error.reason
+      });
+      
+      let errorMessage = '';
+      if (error.code === 'ACTION_REJECTED') {
+        errorMessage = 'Transaction was rejected by user';
+      } else if (error.message?.includes('Insufficient balance')) {
+        errorMessage = 'Insufficient balance in WalletManager contract';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient RON for gas fees';
+      } else {
+        errorMessage = error.message || 'Unknown error';
+      }
+      
+      alert(`❌ Withdrawal failed: ${errorMessage}`);
     } finally {
       setWalletLoading(false);
     }
