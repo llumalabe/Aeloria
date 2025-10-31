@@ -451,13 +451,18 @@ export default function TownPage() {
                     <>
                       <div className="mt-3 grid grid-cols-2 gap-3 bg-black/30 rounded p-3">
                         <div>
-                          <div className="text-xs text-gray-400">On-Chain AETH</div>
+                          <div className="text-xs text-gray-400">💰 Deposited AETH</div>
+                          <div className="text-sm text-gray-500">(Withdrawable)</div>
                           <div className="text-lg font-bold text-blue-400">{parseFloat(blockchainBalances.aethBalance).toFixed(2)}</div>
                         </div>
                         <div>
-                          <div className="text-xs text-gray-400">On-Chain RON</div>
+                          <div className="text-xs text-gray-400">💰 Deposited RON</div>
+                          <div className="text-sm text-gray-500">(Withdrawable)</div>
                           <div className="text-lg font-bold text-cyan-400">{parseFloat(blockchainBalances.ronBalance).toFixed(4)}</div>
                         </div>
+                      </div>
+                      <div className="mt-2 text-xs text-yellow-400 bg-yellow-900/20 rounded p-2">
+                        ℹ️ In-game balance (🔮 {userData?.tokens || 0} AETH, 🔷 {userData?.ronTokens || 0} RON) is separate. Only deposited amounts can be withdrawn.
                       </div>
                     </>
                   )}
