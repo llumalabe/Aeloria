@@ -20,8 +20,8 @@ export default function TownPage() {
   const [blockchainBalances, setBlockchainBalances] = useState({ aethBalance: '0', ronBalance: '0' });
   const [lastRefresh, setLastRefresh] = useState(Date.now());
   
-  // Wallet states (for old UI - will be removed)
-  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'deposit-aeth' | 'withdraw' | 'withdraw-ron'>('select-action');
+  // Wallet states
+  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit-select' | 'withdraw-select' | 'deposit' | 'deposit-aeth' | 'withdraw' | 'withdraw-ron'>('select-action');
   const [selectedToken, setSelectedToken] = useState<'AETH' | 'RON'>('AETH');
   const [amount, setAmount] = useState('');
   const [walletLoading, setWalletLoading] = useState(false);
