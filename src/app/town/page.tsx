@@ -21,7 +21,7 @@ export default function TownPage() {
   const [lastRefresh, setLastRefresh] = useState(Date.now());
   
   // Wallet states (for old UI - will be removed)
-  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'deposit-aeth' | 'withdraw' | 'convert'>('select-action');
+  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'deposit-aeth' | 'withdraw' | 'withdraw-ron'>('select-action');
   const [selectedToken, setSelectedToken] = useState<'AETH' | 'RON'>('AETH');
   const [amount, setAmount] = useState('');
   const [walletLoading, setWalletLoading] = useState(false);
@@ -48,19 +48,19 @@ export default function TownPage() {
     initWallet();
   }, [address, provider, signer, reconnect]);
 
-  // Calculate withdrawal fee in real-time
+  // Calculate withdrawal fee in real-time (only for AETH withdrawal)
   useEffect(() => {
-    if (walletStep === 'withdraw' && selectedToken === 'AETH' && amount) {
+    if (walletStep === 'withdraw' && amount) {
       const amountNum = parseFloat(amount);
       if (!isNaN(amountNum) && amountNum > 0) {
-        setAmountAfterFee(amountNum * 0.95); // 5% fee
+        setAmountAfterFee(amountNum * 0.95); // 5% fee for AETH
       } else {
         setAmountAfterFee(null);
       }
     } else {
       setAmountAfterFee(null);
     }
-  }, [walletStep, selectedToken, amount]);
+  }, [walletStep, amount]);
 
   // Auto-refresh balances every 10 seconds
   useEffect(() => {
@@ -463,6 +463,68 @@ export default function TownPage() {
     }
   };
 
+  const handleWithdrawRon = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
+    if (!signer || !address) {
+      alert('Please connect your Ronin Wallet first');
+      return;
+    }
+
+    // Check if user has enough RON on-chain
+    const onChainBalance = parseFloat(blockchainBalances.ronBalance);
+    
+    if (onChainBalance < parseFloat(amount)) {
+      alert(`❌ Insufficient RON!\n\nYou have ${onChainBalance.toFixed(4)} RON deposited.\nYou need to deposit first.`);
+      return;
+    }
+
+    setWalletLoading(true);
+    try {
+      const { ethers } = await import('ethers');
+      const WalletManagerABI = (await import('@/lib/abis/WalletManager.json')).default;
+      const { CONTRACTS } = await import('@/config/contracts');
+
+      const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, signer);
+      const amountWei = ethers.parseEther(amount);
+      
+      console.log('🔹 Withdrawing RON:', amount);
+      const withdrawTx = await walletManager.withdrawRon(amountWei);
+      console.log('🔹 TX sent:', withdrawTx.hash);
+      const receipt = await withdrawTx.wait();
+      console.log('🔹 TX confirmed:', receipt);
+
+      alert(`✅ RON Withdrawal successful!\n\nAmount: ${amount} RON\nTransaction: ${receipt.hash}\n\nNo fees for RON withdrawal!`);
+
+      setAmount('');
+      setWalletStep('select-action');
+
+      // Refresh balances
+      await fetchBlockchainBalances();
+      await refreshUserData();
+    } catch (error: any) {
+      console.error('❌ Withdraw RON error:', error);
+      
+      let errorMessage = '';
+      if (error.code === 'ACTION_REJECTED') {
+        errorMessage = 'Transaction was rejected by user';
+      } else if (error.message?.includes('Insufficient balance')) {
+        errorMessage = 'Insufficient balance in WalletManager contract';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient RON for gas fees';
+      } else {
+        errorMessage = error.message || 'Unknown error';
+      }
+      
+      alert(`❌ Withdrawal failed: ${errorMessage}`);
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
   // Wrapper functions for WalletModal
   const handleModalDeposit = async (modalAmount: string) => {
     setAmount(modalAmount);
@@ -534,7 +596,7 @@ export default function TownPage() {
             </div>
 
             {/* Currency Display */}
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="bg-black/30 rounded-lg p-4 text-center">
                 <div className="text-3xl mb-1">🪙</div>
                 <div className="text-2xl font-bold text-yellow-400">{userData?.gold?.toLocaleString() || 0}</div>
@@ -544,11 +606,6 @@ export default function TownPage() {
                 <div className="text-3xl mb-1">💎</div>
                 <div className="text-2xl font-bold text-purple-400">{userData?.premiumCurrency || 0}</div>
                 <div className="text-xs text-gray-400">Premium</div>
-              </div>
-              <div className="bg-black/30 rounded-lg p-4 text-center">
-                <div className="text-3xl mb-1">🔮</div>
-                <div className="text-2xl font-bold text-blue-400">{userData?.tokens || 0}</div>
-                <div className="text-xs text-gray-400">AETH (Mined)</div>
               </div>
             </div>
 
@@ -584,23 +641,18 @@ export default function TownPage() {
                     <>
                       <div className="mt-3 bg-black/30 rounded p-4 space-y-3">
                         <div className="border-b border-gray-600 pb-3">
-                          <div className="text-xs text-gray-400">🔮 In-Game AETH</div>
-                          <div className="text-2xl font-bold text-blue-400">{userData?.tokens || 0} AETH</div>
-                          <div className="text-xs text-gray-500 mt-1">Use for minting characters & in-game purchases</div>
-                        </div>
-                        <div className="border-b border-gray-600 pb-3">
-                          <div className="text-xs text-gray-400">💎 Withdrawable AETH</div>
-                          <div className="text-2xl font-bold text-green-400">{parseFloat(blockchainBalances.aethBalance).toFixed(2)} AETH</div>
-                          <div className="text-xs text-gray-500 mt-1">Can be withdrawn to your wallet</div>
+                          <div className="text-xs text-gray-400">� AETH Balance</div>
+                          <div className="text-2xl font-bold text-cyan-400">{parseFloat(blockchainBalances.aethBalance).toFixed(2)} AETH</div>
+                          <div className="text-xs text-gray-500 mt-1">Deposit & withdraw anytime</div>
                         </div>
                         <div>
                           <div className="text-xs text-gray-400">💰 RON Balance</div>
-                          <div className="text-2xl font-bold text-cyan-400">{parseFloat(blockchainBalances.ronBalance).toFixed(4)} RON</div>
-                          <div className="text-xs text-gray-500 mt-1">Deposit to buy packs in Shop</div>
+                          <div className="text-2xl font-bold text-blue-400">{parseFloat(blockchainBalances.ronBalance).toFixed(4)} RON</div>
+                          <div className="text-xs text-gray-500 mt-1">For gas fees & Shop purchases</div>
                         </div>
                       </div>
-                      <div className="mt-2 text-xs text-yellow-400 bg-yellow-900/20 rounded p-2">
-                        ℹ️ <strong>In-Game AETH</strong> for minting. <strong>Withdrawable AETH</strong> can be sent to wallet. <strong>RON</strong> for Shop purchases.
+                      <div className="mt-2 text-xs text-blue-400 bg-blue-900/20 rounded p-2">
+                        ℹ️ Deposit tokens to use in-game, withdraw anytime to your Ronin wallet
                       </div>
                     </>
                   )}
@@ -610,49 +662,68 @@ export default function TownPage() {
                 {walletStep === 'select-action' && (
                   <div className="space-y-3">
                     <h3 className="text-xl font-bold text-white mb-4">💰 Wallet</h3>
-                    <button
-                      onClick={() => {
-                        setWalletStep('deposit-aeth');
-                        setSelectedToken('AETH');
-                      }}
-                      disabled={!signer || !provider}
-                      className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
-                    >
-                      💎 Deposit AETH (From Wallet)
-                    </button>
-                    <button
-                      onClick={() => setWalletStep('deposit')}
-                      disabled={!signer || !provider}
-                      className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
-                    >
-                      📥 Deposit RON (For Shop)
-                    </button>
-                    <button
-                      onClick={() => setWalletStep('convert')}
-                      disabled={!signer || !provider || !userData?.tokens || userData.tokens <= 0}
-                      className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
-                    >
-                      🔄 Convert to Withdrawable AETH
-                    </button>
-                    <button
-                      onClick={() => setWalletStep('withdraw')}
-                      disabled={!signer || !provider}
-                      className="w-full bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
-                    >
-                      📤 Withdraw AETH (To Ronin Wallet)
-                    </button>
+                    
+                    {/* Deposit Section */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-gray-400 uppercase">📥 Deposit</h4>
+                      <button
+                        onClick={() => {
+                          setWalletStep('deposit-aeth');
+                          setSelectedToken('AETH');
+                        }}
+                        disabled={!signer || !provider}
+                        className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
+                      >
+                        💎 Deposit AETH
+                      </button>
+                      <button
+                        onClick={() => {
+                          setWalletStep('deposit');
+                          setSelectedToken('RON');
+                        }}
+                        disabled={!signer || !provider}
+                        className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
+                      >
+                        � Deposit RON
+                      </button>
+                    </div>
+
+                    {/* Withdraw Section */}
+                    <div className="space-y-2 pt-4 border-t border-gray-600">
+                      <h4 className="text-sm font-semibold text-gray-400 uppercase">📤 Withdraw</h4>
+                      <button
+                        onClick={() => {
+                          setWalletStep('withdraw');
+                          setSelectedToken('AETH');
+                        }}
+                        disabled={!signer || !provider}
+                        className="w-full bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
+                      >
+                        💎 Withdraw AETH
+                      </button>
+                      <button
+                        onClick={() => {
+                          setWalletStep('withdraw-ron');
+                          setSelectedToken('RON');
+                        }}
+                        disabled={!signer || !provider}
+                        className="w-full bg-yellow-600 hover:bg-yellow-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all"
+                      >
+                        � Withdraw RON
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {/* Step 2 & 3: Deposit/Withdraw/Convert Form */}
-                {(walletStep === 'deposit' || walletStep === 'deposit-aeth' || walletStep === 'withdraw' || walletStep === 'convert') && (
+                {/* Step 2 & 3: Deposit/Withdraw Form */}
+                {(walletStep === 'deposit' || walletStep === 'deposit-aeth' || walletStep === 'withdraw' || walletStep === 'withdraw-ron') && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xl font-bold text-white">
                         {walletStep === 'deposit' ? '📥 Deposit RON' : 
                          walletStep === 'deposit-aeth' ? '💎 Deposit AETH' :
-                         walletStep === 'convert' ? '🔄 Convert AETH' : 
-                         '📤 Withdraw AETH'}
+                         walletStep === 'withdraw-ron' ? '� Withdraw RON' : 
+                         '� Withdraw AETH'}
                       </h3>
                       <button
                         onClick={() => {
@@ -673,27 +744,24 @@ export default function TownPage() {
 
                     {walletStep === 'deposit-aeth' && (
                       <div className="bg-cyan-900/20 border border-cyan-500/30 rounded p-3 text-sm text-cyan-200">
-                        💎 Deposit AETH from your wallet to WalletManager contract
-                        <div className="mt-2 text-xs">
-                          This allows you to withdraw later or convert back to in-game currency
-                        </div>
-                      </div>
-                    )}
-
-                    {walletStep === 'convert' && (
-                      <div className="bg-purple-900/20 border border-purple-500/30 rounded p-3 text-sm text-purple-200">
-                        🔄 Convert in-game AETH to withdrawable AETH (deposits to smart contract)
-                        <div className="mt-2 text-xs">
-                          Available: <span className="font-bold">{userData?.tokens || 0} AETH</span>
-                        </div>
+                        💎 Deposit AETH from your wallet into the game
                       </div>
                     )}
 
                     {walletStep === 'withdraw' && (
                       <div className="bg-green-900/20 border border-green-500/30 rounded p-3 text-sm text-green-200">
-                        🔮 Withdraw your AETH to your Ronin wallet
+                        � Withdraw AETH from game to your Ronin wallet (5% fee)
                         <div className="mt-2 text-xs">
                           Available: <span className="font-bold">{parseFloat(blockchainBalances.aethBalance).toFixed(2)} AETH</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {walletStep === 'withdraw-ron' && (
+                      <div className="bg-yellow-900/20 border border-yellow-500/30 rounded p-3 text-sm text-yellow-200">
+                        � Withdraw RON from game to your Ronin wallet (No fee)
+                        <div className="mt-2 text-xs">
+                          Available: <span className="font-bold">{parseFloat(blockchainBalances.ronBalance).toFixed(4)} RON</span>
                         </div>
                       </div>
                     )}
@@ -714,33 +782,33 @@ export default function TownPage() {
                       </p>
                     </div>
 
-                    {/* Fee Info & Realtime Calculation */}
+                    {/* Fee Info (only for AETH withdrawal) */}
                     {walletStep === 'withdraw' && (
                       <div className="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4">
-                        {selectedToken === 'AETH' ? (
-                          <>
-                            <p className="text-yellow-400 text-sm mb-2">⚠️ Withdrawal Fee: 5%</p>
-                            {amountAfterFee !== null && (
-                              <div className="space-y-1">
-                                <div className="flex justify-between text-white">
-                                  <span>Amount:</span>
-                                  <span>{parseFloat(amount).toFixed(2)} AETH</span>
-                                </div>
-                                <div className="flex justify-between text-red-400">
-                                  <span>Fee (5%):</span>
-                                  <span>-{(parseFloat(amount) * 0.05).toFixed(2)} AETH</span>
-                                </div>
-                                <div className="border-t border-yellow-500/30 pt-1 mt-1"></div>
-                                <div className="flex justify-between text-green-400 font-bold text-lg">
-                                  <span>You'll receive:</span>
-                                  <span>{amountAfterFee.toFixed(2)} AETH</span>
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <p className="text-green-400 text-sm">✅ No withdrawal fee for RON</p>
+                        <p className="text-yellow-400 text-sm mb-2">⚠️ Withdrawal Fee: 5%</p>
+                        {amountAfterFee !== null && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-white">
+                              <span>Amount:</span>
+                              <span>{parseFloat(amount).toFixed(2)} AETH</span>
+                            </div>
+                            <div className="flex justify-between text-red-400">
+                              <span>Fee (5%):</span>
+                              <span>-{(parseFloat(amount) * 0.05).toFixed(2)} AETH</span>
+                            </div>
+                            <div className="border-t border-yellow-500/30 pt-1 mt-1"></div>
+                            <div className="flex justify-between text-green-400 font-bold text-lg">
+                              <span>You'll receive:</span>
+                              <span>{amountAfterFee.toFixed(2)} AETH</span>
+                            </div>
+                          </div>
                         )}
+                      </div>
+                    )}
+
+                    {walletStep === 'withdraw-ron' && (
+                      <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
+                        <p className="text-green-400 text-sm">✅ No withdrawal fee for RON</p>
                       </div>
                     )}
 
@@ -749,7 +817,7 @@ export default function TownPage() {
                       onClick={
                         walletStep === 'deposit' ? handleDeposit : 
                         walletStep === 'deposit-aeth' ? handleDepositAeth :
-                        walletStep === 'convert' ? handleConvert : 
+                        walletStep === 'withdraw-ron' ? handleWithdrawRon : 
                         handleWithdraw
                       }
                       disabled={walletLoading || !amount || parseFloat(amount) <= 0}
@@ -758,8 +826,8 @@ export default function TownPage() {
                           ? 'bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600'
                           : walletStep === 'deposit-aeth'
                           ? 'bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600'
-                          : walletStep === 'convert'
-                          ? 'bg-purple-600 hover:bg-purple-500 disabled:bg-gray-600'
+                          : walletStep === 'withdraw-ron'
+                          ? 'bg-yellow-600 hover:bg-yellow-500 disabled:bg-gray-600'
                           : 'bg-green-600 hover:bg-green-500 disabled:bg-gray-600'
                       } text-white`}
                     >
@@ -767,8 +835,8 @@ export default function TownPage() {
                        `Confirm ${
                          walletStep === 'deposit' ? 'Deposit RON' : 
                          walletStep === 'deposit-aeth' ? 'Deposit AETH' :
-                         walletStep === 'convert' ? 'Convert' : 
-                         'Withdraw'
+                         walletStep === 'withdraw-ron' ? 'Withdraw RON' : 
+                         'Withdraw AETH'
                        }`}
                     </button>
                   </div>
