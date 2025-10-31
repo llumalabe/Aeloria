@@ -136,45 +136,21 @@ export default function TownPage() {
       return;
     }
 
-    // Check if user has RON for gas fees
-    if (parseFloat(blockchainBalances.ronBalance) < 0.001) {
-      alert('⚠️ Insufficient RON for gas fees!\n\nYou need at least 0.001 RON in your wallet to pay for transaction fees.\n\nGet free testnet RON from:\nhttps://faucet.roninchain.com');
-      return;
-    }
-
     setWalletLoading(true);
     try {
       const { ethers } = await import('ethers');
       const WalletManagerABI = (await import('@/lib/abis/WalletManager.json')).default;
-      const AeloriaTokenABI = (await import('@/lib/abis/AeloriaToken.json')).default;
       const { CONTRACTS } = await import('@/config/contracts');
       
       let txHash: string;
       
-      if (selectedToken === 'AETH') {
-        // Deposit AETH
-        const aethContract = new ethers.Contract(CONTRACTS.AETH_TOKEN, AeloriaTokenABI.abi, signer);
-        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, signer);
-        
-        const amountWei = ethers.parseEther(amount);
-        
-        // Approve
-        const approveTx = await aethContract.approve(CONTRACTS.WALLET_MANAGER, amountWei);
-        await approveTx.wait();
-        
-        // Deposit
-        const depositTx = await walletManager.depositAeth(amountWei);
-        const receipt = await depositTx.wait();
-        txHash = receipt.hash;
-      } else {
-        // Deposit RON
-        const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, signer);
-        const amountWei = ethers.parseEther(amount);
-        
-        const depositTx = await walletManager.depositRon({ value: amountWei });
-        const receipt = await depositTx.wait();
-        txHash = receipt.hash;
-      }
+      // Deposit RON only
+      const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, signer);
+      const amountWei = ethers.parseEther(amount);
+      
+      const depositTx = await walletManager.depositRon({ value: amountWei });
+      const receipt = await depositTx.wait();
+      const txHash = receipt.hash;
 
       if (txHash) {
         // Send transaction to backend for verification
@@ -186,7 +162,7 @@ export default function TownPage() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 txHash: txHash,
-                tokenType: selectedToken,
+                tokenType: 'RON',
                 amount: parseFloat(amount),
               }),
             }
@@ -195,7 +171,7 @@ export default function TownPage() {
           const backendData = await backendRes.json();
 
           if (backendData.success) {
-            alert(`✅ Deposit successful!\nAmount: ${amount} ${selectedToken}\nTransaction: ${txHash}`);
+            alert(`✅ Deposit successful!\nAmount: ${amount} RON\nTransaction: ${txHash}`);
             
             // Refresh balances immediately
             await fetchBlockchainBalances();
@@ -234,19 +210,11 @@ export default function TownPage() {
       return;
     }
 
-    // Check if user has enough balance on-chain
-    const onChainBalance = selectedToken === 'AETH' 
-      ? parseFloat(blockchainBalances.aethBalance)
-      : parseFloat(blockchainBalances.ronBalance);
+    // Check if user has enough AETH on-chain
+    const onChainBalance = parseFloat(blockchainBalances.aethBalance);
     
     if (onChainBalance < parseFloat(amount)) {
-      alert(`❌ Insufficient on-chain balance!\n\nYou have ${onChainBalance.toFixed(4)} ${selectedToken} on-chain.\nYou need to deposit first before withdrawing.`);
-      return;
-    }
-
-    // Check if user has RON for gas fees
-    if (parseFloat(blockchainBalances.ronBalance) < 0.001) {
-      alert('⚠️ Insufficient RON for gas fees!\n\nYou need at least 0.001 RON in your wallet to pay for transaction fees.\n\nGet free testnet RON from:\nhttps://faucet.roninchain.com');
+      alert(`❌ Insufficient AETH!\n\nYou have ${onChainBalance.toFixed(4)} AETH mined.\nYou can only withdraw what you've mined.`);
       return;
     }
 
@@ -257,23 +225,16 @@ export default function TownPage() {
       const { CONTRACTS } = await import('@/config/contracts');
 
       const walletManager = new ethers.Contract(CONTRACTS.WALLET_MANAGER, WalletManagerABI.abi, signer);
-      const amountWei = ethers.parseEther(amount);      let txHash: string;
+      const amountWei = ethers.parseEther(amount);
       
-        if (selectedToken === 'AETH') {
-          console.log('🔹 Withdrawing AETH:', amount);
-          const withdrawTx = await walletManager.withdrawAeth(amountWei);
-          console.log('🔹 TX sent:', withdrawTx.hash);
-          const receipt = await withdrawTx.wait();
-          console.log('🔹 TX confirmed:', receipt);
-          txHash = receipt.hash;
-        } else {
-          console.log('🔹 Withdrawing RON:', amount);
-          const withdrawTx = await walletManager.withdrawRon(amountWei);
-          console.log('🔹 TX sent:', withdrawTx.hash);
-          const receipt = await withdrawTx.wait();
-          console.log('🔹 TX confirmed:', receipt);
-          txHash = receipt.hash;
-        }      if (txHash) {
+      console.log('🔹 Withdrawing AETH:', amount);
+      const withdrawTx = await walletManager.withdrawAeth(amountWei);
+      console.log('🔹 TX sent:', withdrawTx.hash);
+      const receipt = await withdrawTx.wait();
+      console.log('🔹 TX confirmed:', receipt);
+      const txHash = receipt.hash;
+
+      if (txHash) {
         // Send transaction to backend for verification
         try {
           const backendRes = await fetch(
@@ -283,7 +244,7 @@ export default function TownPage() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 txHash: txHash,
-                tokenType: selectedToken,
+                tokenType: 'AETH',
                 amount: parseFloat(amount),
               }),
             }
@@ -293,9 +254,9 @@ export default function TownPage() {
 
           if (backendData.success) {
             const feeMsg = backendData.fee && parseFloat(backendData.fee) > 0 
-              ? `\nFee: ${backendData.fee} ${selectedToken}`
+              ? `\nFee: ${backendData.fee} AETH`
               : '';
-            alert(`✅ Withdrawal successful!\nAmount: ${amount} ${selectedToken}${feeMsg}\nTransaction: ${txHash}`);
+            alert(`✅ Withdrawal successful!\nAmount: ${amount} AETH${feeMsg}\nTransaction: ${txHash}`);
             
             // Refresh balances immediately
             await fetchBlockchainBalances();
@@ -396,7 +357,7 @@ export default function TownPage() {
             </div>
 
             {/* Currency Display */}
-            <div className="grid grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="bg-black/30 rounded-lg p-4 text-center">
                 <div className="text-3xl mb-1">🪙</div>
                 <div className="text-2xl font-bold text-yellow-400">{userData?.gold?.toLocaleString() || 0}</div>
@@ -410,12 +371,7 @@ export default function TownPage() {
               <div className="bg-black/30 rounded-lg p-4 text-center">
                 <div className="text-3xl mb-1">🔮</div>
                 <div className="text-2xl font-bold text-blue-400">{userData?.tokens || 0}</div>
-                <div className="text-xs text-gray-400">AETH</div>
-              </div>
-              <div className="bg-black/30 rounded-lg p-4 text-center">
-                <div className="text-3xl mb-1">🔷</div>
-                <div className="text-2xl font-bold text-cyan-400">{userData?.ronTokens || 0}</div>
-                <div className="text-xs text-gray-400">RON</div>
+                <div className="text-xs text-gray-400">AETH (Mined)</div>
               </div>
             </div>
 
@@ -449,20 +405,20 @@ export default function TownPage() {
                   
                   {(!!signer && !!provider) && (
                     <>
-                      <div className="mt-3 grid grid-cols-2 gap-3 bg-black/30 rounded p-3">
-                        <div>
-                          <div className="text-xs text-gray-400">💰 Deposited AETH</div>
-                          <div className="text-sm text-gray-500">(Withdrawable)</div>
-                          <div className="text-lg font-bold text-blue-400">{parseFloat(blockchainBalances.aethBalance).toFixed(2)}</div>
+                      <div className="mt-3 bg-black/30 rounded p-4">
+                        <div className="mb-3">
+                          <div className="text-xs text-gray-400">🔮 Mined AETH (Withdrawable)</div>
+                          <div className="text-2xl font-bold text-blue-400">{parseFloat(blockchainBalances.aethBalance).toFixed(2)} AETH</div>
+                          <div className="text-xs text-gray-500 mt-1">From NFT character mining</div>
                         </div>
-                        <div>
-                          <div className="text-xs text-gray-400">💰 Deposited RON</div>
-                          <div className="text-sm text-gray-500">(Withdrawable)</div>
-                          <div className="text-lg font-bold text-cyan-400">{parseFloat(blockchainBalances.ronBalance).toFixed(4)}</div>
+                        <div className="border-t border-gray-600 pt-3">
+                          <div className="text-xs text-gray-400">💰 RON Balance (For Shop)</div>
+                          <div className="text-2xl font-bold text-cyan-400">{parseFloat(blockchainBalances.ronBalance).toFixed(4)} RON</div>
+                          <div className="text-xs text-gray-500 mt-1">Use to buy packs in Shop</div>
                         </div>
                       </div>
                       <div className="mt-2 text-xs text-yellow-400 bg-yellow-900/20 rounded p-2">
-                        ℹ️ In-game balance (🔮 {userData?.tokens || 0} AETH, 🔷 {userData?.ronTokens || 0} RON) is separate. Only deposited amounts can be withdrawn.
+                        ℹ️ <strong>AETH</strong> is earned from mining. <strong>RON</strong> must be deposited from your wallet to spend in Shop.
                       </div>
                     </>
                   )}
@@ -494,7 +450,7 @@ export default function TownPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xl font-bold text-white">
-                        {walletStep === 'deposit' ? '📥 Deposit' : '📤 Withdraw'}
+                        {walletStep === 'deposit' ? '📥 Deposit RON' : '📤 Withdraw AETH'}
                       </h3>
                       <button
                         onClick={() => {
@@ -507,32 +463,17 @@ export default function TownPage() {
                       </button>
                     </div>
 
-                    {/* Token Selection */}
-                    <div>
-                      <label className="text-sm text-gray-400 mb-2 block">Select Token</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => setSelectedToken('AETH')}
-                          className={`py-3 rounded-lg font-bold transition-all ${
-                            selectedToken === 'AETH'
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                          }`}
-                        >
-                          🔮 AETH
-                        </button>
-                        <button
-                          onClick={() => setSelectedToken('RON')}
-                          className={`py-3 rounded-lg font-bold transition-all ${
-                            selectedToken === 'RON'
-                              ? 'bg-cyan-600 text-white'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                          }`}
-                        >
-                          🔷 RON
-                        </button>
+                    {walletStep === 'deposit' && (
+                      <div className="bg-blue-900/20 border border-blue-500/30 rounded p-3 text-sm text-blue-200">
+                        💰 Deposit RON to use in Shop for buying packs and items
                       </div>
-                    </div>
+                    )}
+
+                    {walletStep === 'withdraw' && (
+                      <div className="bg-green-900/20 border border-green-500/30 rounded p-3 text-sm text-green-200">
+                        🔮 Withdraw your mined AETH to your Ronin wallet
+                      </div>
+                    )}
 
                     {/* Amount Input */}
                     <div>
