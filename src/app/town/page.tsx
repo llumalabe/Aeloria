@@ -4,8 +4,9 @@ import { useWallet } from '@/hooks/useWallet';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import TransactionHistory from '@/components/TransactionHistory';
+import WalletModal from '@/components/WalletModal';
 
 export default function TownPage() {
   const { address, provider, signer, reconnect } = useWallet();
@@ -15,26 +16,9 @@ export default function TownPage() {
   const [maxEnergy, setMaxEnergy] = useState(30);
   const [showWallet, setShowWallet] = useState(false);
   
-  // Blockchain balances
+  // Blockchain balances with auto-refresh
   const [blockchainBalances, setBlockchainBalances] = useState({ aethBalance: '0', ronBalance: '0' });
-  
-  // Wallet states
-  const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'withdraw' | 'convert'>('select-action');
-  const [selectedToken, setSelectedToken] = useState<'AETH' | 'RON'>('AETH');
-  const [amount, setAmount] = useState('');
-  const [walletLoading, setWalletLoading] = useState(false);
-
-  // Calculate amount after fee (for AETH withdrawal only)
-  const amountAfterFee = useMemo(() => {
-    if (walletStep === 'withdraw' && selectedToken === 'AETH' && amount) {
-      const numAmount = parseFloat(amount);
-      if (!isNaN(numAmount)) {
-        const fee = numAmount * 0.05;
-        return numAmount - fee;
-      }
-    }
-    return null;
-  }, [walletStep, selectedToken, amount]);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
 
   useEffect(() => {
     if (!address) {
@@ -57,15 +41,21 @@ export default function TownPage() {
     initWallet();
   }, [address, provider, signer, reconnect]);
 
-  // Fetch energy and balances when wallet is ready
+  // Auto-refresh balances every 10 seconds
   useEffect(() => {
     if (address && provider && signer) {
       fetchEnergy();
       fetchBlockchainBalances();
+      
+      const interval = setInterval(() => {
+        fetchBlockchainBalances();
+      }, 10000); // 10 seconds
+
+      return () => clearInterval(interval);
     }
   }, [address, provider, signer]);
 
-  const fetchBlockchainBalances = async () => {
+  const fetchBlockchainBalances = useCallback(async () => {
     if (!address || !provider) {
       console.log('❌ Cannot fetch balances - missing address or provider:', { address, provider: !!provider });
       return;
@@ -109,10 +99,13 @@ export default function TownPage() {
         aethBalance,
         ronBalance
       });
+      setLastRefresh(Date.now());
     } catch (error) {
       console.error('Failed to fetch balances:', error);
     }
-  };  const fetchEnergy = async () => {
+  }, [address, provider]);
+
+  const fetchEnergy = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${address}/energy`);
       const data = await res.json();
@@ -374,6 +367,19 @@ export default function TownPage() {
     } finally {
       setWalletLoading(false);
     }
+  };
+
+  // Wrapper functions for WalletModal
+  const handleModalDeposit = async (amount: string) => {
+    await handleDeposit();
+  };
+
+  const handleModalConvert = async (amount: string) => {
+    await handleConvert();
+  };
+
+  const handleModalWithdraw = async (amount: string) => {
+    await handleWithdraw();
   };
 
   if (!address) {
