@@ -22,8 +22,10 @@ export default function TownPage() {
   
   // Wallet states (for old UI - will be removed)
   const [walletStep, setWalletStep] = useState<'select-action' | 'deposit' | 'withdraw' | 'convert'>('select-action');
+  const [selectedToken, setSelectedToken] = useState<'AETH' | 'RON'>('AETH');
   const [amount, setAmount] = useState('');
   const [walletLoading, setWalletLoading] = useState(false);
+  const [amountAfterFee, setAmountAfterFee] = useState<number | null>(null);
 
   useEffect(() => {
     if (!address) {
@@ -45,6 +47,20 @@ export default function TownPage() {
     };
     initWallet();
   }, [address, provider, signer, reconnect]);
+
+  // Calculate withdrawal fee in real-time
+  useEffect(() => {
+    if (walletStep === 'withdraw' && selectedToken === 'AETH' && amount) {
+      const amountNum = parseFloat(amount);
+      if (!isNaN(amountNum) && amountNum > 0) {
+        setAmountAfterFee(amountNum * 0.95); // 5% fee
+      } else {
+        setAmountAfterFee(null);
+      }
+    } else {
+      setAmountAfterFee(null);
+    }
+  }, [walletStep, selectedToken, amount]);
 
   // Auto-refresh balances every 10 seconds
   useEffect(() => {
