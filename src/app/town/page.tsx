@@ -272,10 +272,9 @@ export default function TownPage() {
       const currentAllowance = await aethToken.allowance(address, CONTRACTS.WALLET_MANAGER);
       
       if (currentAllowance < amountWei) {
-        alert('📝 Step 1/2: Please approve AETH spending...');
+        // Silently approve - user will see wallet confirmation
         const approveTx = await aethToken.approve(CONTRACTS.WALLET_MANAGER, amountWei);
         await approveTx.wait();
-        alert('✅ Approval confirmed! Now depositing...');
       }
 
       // Step 3: Deposit to WalletManager

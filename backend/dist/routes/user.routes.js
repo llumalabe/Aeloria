@@ -256,32 +256,30 @@ router.post('/:walletAddress/wallet/deposit', async (req, res) => {
         if (!tokenType || !['AETH', 'RON'].includes(tokenType)) {
             return res.status(400).json({ success: false, error: 'Invalid token type' });
         }
-        // In production, verify blockchain transaction here
-        if (tokenType === 'AETH') {
-            user.tokens += amount;
+        if (!txHash) {
+            return res.status(400).json({ success: false, error: 'Transaction hash required' });
         }
-        else if (tokenType === 'RON') {
-            user.ronTokens += amount;
-        }
+        // IMPORTANT: Do NOT modify user.tokens or user.ronTokens
+        // Deposits go to WalletManager contract, not in-game tokens
+        // Smart contract already holds the tokens
+        // We just need to log the transaction for history
         // Save transaction history
-        if (txHash) {
-            user.transactions.push({
-                txHash,
-                type: 'deposit',
-                tokenType,
-                amount: amount.toString(),
-                fee: '0',
-                status: 'confirmed',
-                timestamp: new Date(),
-                verified: true
-            });
-        }
+        user.transactions.push({
+            txHash,
+            type: 'deposit',
+            tokenType,
+            amount: amount.toString(),
+            fee: '0',
+            status: 'confirmed',
+            timestamp: new Date(),
+            verified: true
+        });
         await user.save();
         res.json({
             success: true,
             tokens: user.tokens,
             ronTokens: user.ronTokens,
-            message: `Deposited ${amount} ${tokenType}`
+            message: `Deposited ${amount} ${tokenType} to WalletManager`
         });
     }
     catch (error) {
@@ -301,68 +299,42 @@ router.post('/:walletAddress/wallet/withdraw', async (req, res) => {
         if (!tokenType || !['AETH', 'RON'].includes(tokenType)) {
             return res.status(400).json({ success: false, error: 'Invalid token type' });
         }
-        let finalAmount = amount;
+        if (!txHash) {
+            return res.status(400).json({ success: false, error: 'Transaction hash required' });
+        }
+        // Calculate fees (AETH has 5% withdrawal fee, RON has no fee)
         let fee = 0;
-        // AETH has 5% withdrawal fee, RON has no fee
+        let amountAfterFee = amount;
         if (tokenType === 'AETH') {
             fee = amount * 0.05; // 5% fee
-            finalAmount = amount; // User pays from their balance
-            if (user.tokens < finalAmount) {
-                return res.status(400).json({ success: false, error: 'Insufficient AETH tokens' });
-            }
-            user.tokens -= finalAmount;
-            const amountAfterFee = finalAmount - fee;
-            // Save transaction history
-            if (txHash) {
-                user.transactions.push({
-                    txHash,
-                    type: 'withdraw',
-                    tokenType,
-                    amount: amountAfterFee.toString(),
-                    fee: fee.toString(),
-                    status: 'confirmed',
-                    timestamp: new Date(),
-                    verified: true
-                });
-            }
-            await user.save();
-            res.json({
-                success: true,
-                tokens: user.tokens,
-                ronTokens: user.ronTokens,
-                amountWithdrawn: amountAfterFee,
-                fee: fee,
-                message: `Withdrawn ${amountAfterFee.toFixed(2)} AETH (${fee.toFixed(2)} fee)`
-            });
+            amountAfterFee = amount - fee;
         }
-        else if (tokenType === 'RON') {
-            if (user.ronTokens < amount) {
-                return res.status(400).json({ success: false, error: 'Insufficient RON tokens' });
-            }
-            user.ronTokens -= amount;
-            // Save transaction history
-            if (txHash) {
-                user.transactions.push({
-                    txHash,
-                    type: 'withdraw',
-                    tokenType,
-                    amount: amount.toString(),
-                    fee: '0',
-                    status: 'confirmed',
-                    timestamp: new Date(),
-                    verified: true
-                });
-            }
-            await user.save();
-            res.json({
-                success: true,
-                tokens: user.tokens,
-                ronTokens: user.ronTokens,
-                amountWithdrawn: amount,
-                fee: 0,
-                message: `Withdrawn ${amount} RON (no fee)`
-            });
-        }
+        // IMPORTANT: Do NOT deduct user.tokens or user.ronTokens
+        // The withdrawal is from WalletManager deposits, not in-game tokens
+        // Smart contract already transferred tokens to user's wallet
+        // We just need to log the transaction for history
+        // Save transaction history
+        user.transactions.push({
+            txHash,
+            type: 'withdraw',
+            tokenType,
+            amount: amountAfterFee.toString(),
+            fee: fee.toString(),
+            status: 'confirmed',
+            timestamp: new Date(),
+            verified: true
+        });
+        await user.save();
+        res.json({
+            success: true,
+            tokens: user.tokens,
+            ronTokens: user.ronTokens,
+            amountWithdrawn: amountAfterFee,
+            fee: fee,
+            message: tokenType === 'AETH'
+                ? `Withdrawn ${amountAfterFee.toFixed(4)} AETH (${fee.toFixed(4)} AETH fee)`
+                : `Withdrawn ${amount} RON (no fee)`
+        });
     }
     catch (error) {
         console.error('Withdraw error:', error);
