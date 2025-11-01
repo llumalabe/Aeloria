@@ -19,7 +19,7 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black flex items-center justify-center lg:pl-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-yellow-400 mx-auto mb-4"></div>
           <p className="text-xl text-gray-300">Loading your account...</p>
@@ -33,7 +33,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-purple-950 to-black">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-purple-950 to-black lg:pl-64">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-5xl font-bold text-center text-yellow-400 mb-8">
           ⚔️ Dashboard

@@ -21,7 +21,7 @@ export default function CraftingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-900 via-red-900 to-black">
+    <div className="min-h-screen bg-gradient-to-b from-orange-900 via-red-900 to-black lg:pl-64">
       <BackToTown />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-5xl font-bold text-center mb-8 text-yellow-400">

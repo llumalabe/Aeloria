@@ -548,7 +548,7 @@ export default function TownPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-black flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-black flex items-center justify-center lg:pl-64">
         <div className="text-center">
           <div className="text-6xl mb-4 animate-bounce">⏳</div>
           <p className="text-xl text-gray-300">Loading your town...</p>
@@ -558,7 +558,7 @@ export default function TownPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-black">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-black lg:pl-64">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-5xl font-bold text-center mb-8 text-yellow-400">
           🏰 Town of Aeloria
