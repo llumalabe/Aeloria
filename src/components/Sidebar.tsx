@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@/hooks/useWallet';
+import { TantoConnectButton } from '@sky-mavis/tanto-widget';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,8 +13,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname();
-  const { address, disconnect, connect } = useWallet();
-  const [showWalletModal, setShowWalletModal] = useState(false);
+  const { address, disconnect } = useWallet();
 
   // Menu items based on login status
   const menuItems = address ? [
@@ -106,13 +106,24 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 </button>
               </>
             ) : (
-              /* Not Logged In: Show Connect Wallet */
-              <button
-                onClick={() => setShowWalletModal(true)}
-                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105"
-              >
-                🔗 Connect Wallet
-              </button>
+              /* Not Logged In: Show Tanto Connect Button */
+              <div className="w-full">
+                <TantoConnectButton>
+                  {({ isConnected, showModal }) =>
+                    !isConnected ? (
+                      <button
+                        onClick={() => {
+                          showModal();
+                          setIsOpen(false);
+                        }}
+                        className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105"
+                      >
+                        🔗 Connect Wallet
+                      </button>
+                    ) : null
+                  }
+                </TantoConnectButton>
+              </div>
             )}
           </div>
         </div>
@@ -120,77 +131,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
       {/* Spacer for desktop to prevent content from hiding under sidebar */}
       <div className="hidden lg:block w-64" />
-
-      {/* Wallet Selection Modal */}
-      {showWalletModal && (
-        <div 
-          onClick={() => setShowWalletModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-        >
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="bg-gradient-to-b from-gray-900 to-black border-2 border-yellow-500/50 rounded-xl p-8 max-w-md w-full mx-4"
-          >
-            <h2 className="text-2xl font-bold text-white mb-2">Connect Wallet</h2>
-            <p className="text-gray-400 mb-6">Choose your wallet to start playing</p>
-
-            <div className="space-y-3">
-              {/* Ronin Wallet */}
-              <button
-                onClick={async () => {
-                  try {
-                    await connect('ronin');
-                    setShowWalletModal(false);
-                    setIsOpen(false);
-                  } catch (error) {
-                    console.error('Failed to connect:', error);
-                  }
-                }}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-lg transition-all flex items-center justify-between group"
-              >
-                <span className="flex items-center gap-3">
-                  <span className="text-2xl">🗡️</span>
-                  <span>Ronin Wallet</span>
-                </span>
-                <span className="text-sm opacity-75 group-hover:opacity-100">Recommended</span>
-              </button>
-
-              {/* MetaMask */}
-              <button
-                onClick={async () => {
-                  try {
-                    await connect('metamask');
-                    setShowWalletModal(false);
-                    setIsOpen(false);
-                  } catch (error) {
-                    console.error('Failed to connect:', error);
-                  }
-                }}
-                className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold py-4 px-6 rounded-lg transition-all flex items-center gap-3"
-              >
-                <span className="text-2xl">🦊</span>
-                <span>MetaMask</span>
-              </button>
-
-              {/* WalletConnect */}
-              <button
-                disabled
-                className="w-full bg-gray-700 text-gray-400 font-bold py-4 px-6 rounded-lg cursor-not-allowed flex items-center gap-3"
-              >
-                <span className="text-2xl">📱</span>
-                <span>WalletConnect (Coming Soon)</span>
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowWalletModal(false)}
-              className="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }

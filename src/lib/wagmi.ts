@@ -1,0 +1,39 @@
+import { getDefaultConfig } from '@sky-mavis/tanto-widget';
+import { ronin, saigon } from 'viem/chains';
+
+// Tanto Widget Configuration for Aeloria
+export const wagmiConfig = getDefaultConfig({
+  // App metadata
+  appMetadata: {
+    appName: 'Aeloria: Guardians of the Eternal Sigils',
+    appIcon: 'https://aeloria.vercel.app/icon.png',
+    appDescription: 'Web3 Fantasy RPG on Ronin Network - Explore dungeons, battle bosses, and earn AETH tokens',
+    appUrl: 'https://aeloria.vercel.app',
+  },
+
+  // Supported chains: Ronin Mainnet (2020) and Saigon Testnet (2021)
+  chains: [saigon, ronin],
+
+  // WalletConnect configuration
+  walletConnectConfig: {
+    projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'default_project_id',
+    enable: true,
+  },
+
+  // Ronin Waypoint (keyless wallet) configuration
+  keylessWalletConfig: {
+    chainId: 2021, // Saigon Testnet
+    clientId: process.env.NEXT_PUBLIC_WAYPOINT_CLIENT_ID || '',
+    waypointOrigin: 'https://waypoint.roninchain.com',
+    popupCloseDelay: 1000,
+    enable: true,
+  },
+
+  // Disable Coinbase Wallet (not needed for Ronin)
+  coinbaseWalletConfig: {
+    enable: false,
+  },
+
+  // Enable multi-injected provider discovery (EIP-6963)
+  multiInjectedProviderDiscovery: true,
+});
