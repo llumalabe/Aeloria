@@ -10,7 +10,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <div className="flex min-h-screen bg-black text-white">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      <div className="flex flex-col flex-1 min-h-screen">
+      
+      {/* Main Content - with proper spacing for desktop sidebar */}
+      <div className="flex flex-col flex-1 min-h-screen lg:ml-64">
         {/* Hamburger for Mobile */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}

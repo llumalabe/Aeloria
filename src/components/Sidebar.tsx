@@ -19,10 +19,10 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const menuItems = address ? [
     { href: '/', label: 'Home', icon: '🏠' },
     { href: '/town', label: 'Town', icon: '🏰' },
-    { href: '/characters', label: 'Inventory', icon: '�' },
+    { href: '/characters', label: 'Inventory', icon: '🎒' },
     { href: '/gacha', label: 'Summon', icon: '🎲' },
     { href: '/crafting', label: 'Craft', icon: '🔨' },
-    { href: '/rewards', label: 'Rewards', icon: '�' },
+    { href: '/rewards', label: 'Rewards', icon: '🎁' },
     { href: '/ranking', label: 'Leaderboard', icon: '🏆' },
     { href: '/vip', label: 'VIP', icon: '👑' },
   ] : [
@@ -47,7 +47,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-purple-900 via-indigo-900 to-black border-r-2 border-yellow-500/30 z-40 transform transition-transform duration-300 ease-in-out
+        className={`fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-purple-900 via-indigo-900 to-black border-r-2 border-yellow-500/30 z-50 transform transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
           lg:translate-x-0`}
       >
@@ -123,8 +123,14 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
       {/* Wallet Selection Modal */}
       {showWalletModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="bg-gradient-to-b from-gray-900 to-black border-2 border-yellow-500/50 rounded-xl p-8 max-w-md w-full mx-4">
+        <div 
+          onClick={() => setShowWalletModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-gradient-to-b from-gray-900 to-black border-2 border-yellow-500/50 rounded-xl p-8 max-w-md w-full mx-4"
+          >
             <h2 className="text-2xl font-bold text-white mb-2">Connect Wallet</h2>
             <p className="text-gray-400 mb-6">Choose your wallet to start playing</p>
 
