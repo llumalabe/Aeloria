@@ -4,6 +4,7 @@ import { useWallet } from '@/hooks/useWallet';
 import BackToTown from '@/components/BackToTown';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import SuccessModal from '@/components/SuccessModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -14,6 +15,15 @@ export default function RewardsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rewards, setRewards] = useState<{ gold: number; premium: number; exp: number } | null>(null);
+
+  // Success Modal state
+  const [successModal, setSuccessModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    amount: '',
+    type: 'claim' as const
+  });
 
   useEffect(() => {
     if (!address) {
@@ -44,6 +54,16 @@ export default function RewardsPage() {
       if (data.success) {
         setClaimed(true);
         setRewards(data.rewards);
+        
+        // Show success modal
+        setSuccessModal({
+          isOpen: true,
+          title: 'Daily Reward Claimed!',
+          message: `You received ${data.rewards.gold} Gold, ${data.rewards.premium} Premium, and ${data.rewards.exp} EXP!`,
+          amount: `${data.rewards.gold} Gold + ${data.rewards.premium} Premium`,
+          type: 'claim'
+        });
+        
         setTimeout(() => {
           setClaimed(false);
           setRewards(null);
@@ -212,6 +232,16 @@ export default function RewardsPage() {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
+        title={successModal.title}
+        message={successModal.message}
+        amount={successModal.amount}
+        type={successModal.type}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import TransactionHistory from '@/components/TransactionHistory';
 import WalletModal from '@/components/WalletModal';
 import RonIcon from '@/components/RonIcon';
+import SuccessModal from '@/components/SuccessModal';
 
 export default function TownPage() {
   const { address, provider, signer, reconnect } = useWallet();
@@ -16,6 +17,22 @@ export default function TownPage() {
   const [energy, setEnergy] = useState(30);
   const [maxEnergy, setMaxEnergy] = useState(30);
   const [showWallet, setShowWallet] = useState(false);
+  
+  // Success Modal state
+  const [successModal, setSuccessModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    amount?: string;
+    tokenType?: string;
+    txHash?: string;
+    type: 'deposit' | 'withdraw' | 'convert' | 'claim';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'deposit'
+  });
   
   // Blockchain balances with auto-refresh
   const [blockchainBalances, setBlockchainBalances] = useState({ aethBalance: '0', ronBalance: '0' });
@@ -184,7 +201,16 @@ export default function TownPage() {
           const backendData = await backendRes.json();
 
           if (backendData.success) {
-            alert(`✅ Deposit successful!\nAmount: ${amount} RON\nTransaction: ${txHash}`);
+            // Show success modal
+            setSuccessModal({
+              isOpen: true,
+              title: 'Deposit Successful!',
+              message: 'Your RON has been deposited to the game',
+              amount: amount,
+              tokenType: 'RON',
+              txHash: txHash,
+              type: 'deposit'
+            });
             
             // Refresh balances immediately
             await fetchBlockchainBalances();
@@ -258,7 +284,16 @@ export default function TownPage() {
       const txHash: string = receipt.hash;
 
       if (txHash) {
-        alert(`✅ AETH Deposit successful!\n\nAmount: ${amount} AETH\nTransaction: ${txHash}\n\nYou can now withdraw or use it in-game!`);
+        // Show success modal
+        setSuccessModal({
+          isOpen: true,
+          title: 'AETH Deposit Successful!',
+          message: 'Your AETH has been deposited. You can now withdraw or use it in-game!',
+          amount: amount,
+          tokenType: 'AETH',
+          txHash: txHash,
+          type: 'deposit'
+        });
         
         // Refresh balances
         await fetchBlockchainBalances();
@@ -416,9 +451,19 @@ export default function TownPage() {
 
           if (backendData.success) {
             const feeMsg = backendData.fee && parseFloat(backendData.fee) > 0 
-              ? `\nFee: ${backendData.fee} AETH`
+              ? ` (Fee: ${backendData.fee} AETH)`
               : '';
-            alert(`✅ Withdrawal successful!\nAmount: ${amount} AETH${feeMsg}\nTransaction: ${txHash}`);
+            
+            // Show success modal
+            setSuccessModal({
+              isOpen: true,
+              title: 'Withdrawal Successful!',
+              message: `Your AETH has been withdrawn to your wallet${feeMsg}`,
+              amount: amount,
+              tokenType: 'AETH',
+              txHash: txHash,
+              type: 'withdraw'
+            });
             
             // Refresh balances immediately
             await fetchBlockchainBalances();
@@ -498,7 +543,16 @@ export default function TownPage() {
       const receipt = await withdrawTx.wait();
       console.log('🔹 TX confirmed:', receipt);
 
-      alert(`✅ RON Withdrawal successful!\n\nAmount: ${amount} RON\nTransaction: ${receipt.hash}\n\nNo fees for RON withdrawal!`);
+      // Show success modal
+      setSuccessModal({
+        isOpen: true,
+        title: 'RON Withdrawal Successful!',
+        message: 'Your RON has been withdrawn to your wallet (No fees!)',
+        amount: amount,
+        tokenType: 'RON',
+        txHash: receipt.hash,
+        type: 'withdraw'
+      });
 
       setAmount('');
       setWalletStep('select-action');
@@ -999,6 +1053,18 @@ export default function TownPage() {
           </div>
         )}
       </div>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
+        title={successModal.title}
+        message={successModal.message}
+        amount={successModal.amount}
+        tokenType={successModal.tokenType}
+        txHash={successModal.txHash}
+        type={successModal.type}
+      />
     </div>
   );
 }
