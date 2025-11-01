@@ -1,25 +1,15 @@
 import { create } from 'zustand';
-
-interface User {
-  walletAddress: string;
-  username: string;
-  gold: number;
-  premium: number;
-  tokens: number;
-  level: number;
-  exp: number;
-  loginStreak: number;
-}
+import type { User, Character, Item } from '@/types/game';
 
 interface GameState {
   user: User | null;
-  selectedCharacter: any | null;
-  characters: any[];
-  items: any[];
+  selectedCharacter: Character | null;
+  characters: Character[];
+  items: Item[];
   setUser: (user: User | null) => void;
-  setSelectedCharacter: (character: any) => void;
-  setCharacters: (characters: any[]) => void;
-  setItems: (items: any[]) => void;
+  setSelectedCharacter: (character: Character | null) => void;
+  setCharacters: (characters: Character[]) => void;
+  setItems: (items: Item[]) => void;
   updateCurrency: (gold?: number, premium?: number, tokens?: number) => void;
 }
 

@@ -463,7 +463,93 @@ router.get('/:address/transactions', async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to fetch transactions' });
   }
 });
+
+// POST /api/users/:walletAddress/claim-daily - Claim daily reward
+router.post('/:walletAddress/claim-daily', async (req, res) => {
+  try {
+    const { walletAddress } = req.params;
+
+    const user = await User.findOne({ 
+      walletAddress: walletAddress.toLowerCase() 
+    });
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'User not found' 
+      });
+    }
+
+    // Check if already claimed today
+    const lastClaim = user.lastDailyReward;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (lastClaim) {
+      const lastClaimDate = new Date(
+        lastClaim.getFullYear(), 
+        lastClaim.getMonth(), 
+        lastClaim.getDate()
+      );
+      
+      if (lastClaimDate.getTime() === today.getTime()) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Daily reward already claimed today' 
+        });
+      }
+    }
+
+    // Daily reward amounts
+    const dailyRewards = {
+      gold: 100,
+      premium: 10,
+      exp: 50
+    };
+
+    // Update user
+    user.gold += dailyRewards.gold;
+    user.premium += dailyRewards.premium;
+    user.exp += dailyRewards.exp;
+    user.lastDailyReward = now;
+
+    // Add transaction record
+    if (!user.transactions) {
+      user.transactions = [];
+    }
+    
+    user.transactions.push({
+      type: 'Daily Reward',
+      amount: dailyRewards.gold,
+      timestamp: now,
+      status: 'Completed',
+    });
+
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      rewards: dailyRewards,
+      user: {
+        gold: user.gold,
+        premium: user.premium,
+        exp: user.exp,
+        level: user.level
+      }
+    });
+  } catch (error: any) {
+    console.error('Error claiming daily reward:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to claim daily reward' 
+    });
+  }
+});
+
 export default router;
+
+
+
 
 
 

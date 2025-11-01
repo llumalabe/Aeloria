@@ -1,5 +1,27 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+interface DungeonEventEffects {
+  hp?: number;
+  gold?: number;
+  item?: {
+    name: string;
+    type: string;
+    rarity: string;
+  };
+  damage?: number;
+}
+
+interface BossRewards {
+  gold: number;
+  exp: number;
+  items: Array<{
+    name: string;
+    type: string;
+    rarity: string;
+    dropRate: number;
+  }>;
+}
+
 export interface IDungeon extends Document {
   name: string;
   difficulty: 'Easy' | 'Normal' | 'Hard' | 'Expert' | 'Hell';
@@ -20,7 +42,7 @@ export interface IDungeon extends Document {
     type: string;
     description: string;
     probability: number;
-    effects: any;
+    effects: DungeonEventEffects;
   }>;
   bosses: Array<{
     name: string;
@@ -28,7 +50,7 @@ export interface IDungeon extends Document {
     str: number;
     agi: number;
     int: number;
-    rewards: any;
+    rewards: BossRewards;
   }>;
   isActive: boolean;
 }

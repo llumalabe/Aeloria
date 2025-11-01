@@ -5,10 +5,15 @@ import BackToTown from '@/components/BackToTown';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 export default function RewardsPage() {
   const { address } = useWallet();
   const router = useRouter();
   const [claimed, setClaimed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [rewards, setRewards] = useState<{ gold: number; premium: number; exp: number } | null>(null);
 
   useEffect(() => {
     if (!address) {
@@ -20,9 +25,38 @@ export default function RewardsPage() {
     return null;
   }
 
-  const handleClaimDaily = () => {
-    setClaimed(true);
-    // TODO: API call to claim daily reward
+  const handleClaimDaily = async () => {
+    if (!address || loading) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/users/${address}/claim-daily`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setClaimed(true);
+        setRewards(data.rewards);
+        setTimeout(() => {
+          setClaimed(false);
+          setRewards(null);
+        }, 5000);
+      } else {
+        setError(data.error || 'Failed to claim reward');
+      }
+    } catch (err) {
+      console.error('Error claiming daily reward:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,16 +91,33 @@ export default function RewardsPage() {
                 </div>
               ))}
             </div>
+
+            {/* Success Message */}
+            {claimed && rewards && (
+              <div className="mb-4 p-4 bg-green-600/30 border-2 border-green-500 rounded-lg">
+                <p className="text-green-300 font-bold text-center">
+                  ✅ Claimed! +{rewards.gold} Gold, +{rewards.premium} Premium, +{rewards.exp} EXP
+                </p>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-4 bg-red-600/30 border-2 border-red-500 rounded-lg">
+                <p className="text-red-300 font-bold text-center">❌ {error}</p>
+              </div>
+            )}
+
             <button
               onClick={handleClaimDaily}
-              disabled={claimed}
+              disabled={claimed || loading}
               className={`w-full py-4 rounded-lg font-bold text-xl transition-all ${
-                claimed
+                claimed || loading
                   ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                   : 'bg-yellow-500 hover:bg-yellow-600 text-black'
               }`}
             >
-              {claimed ? '✅ Claimed Today' : 'Claim Daily Reward'}
+              {loading ? '⏳ Claiming...' : claimed ? '✅ Claimed Today' : '🎁 Claim Daily Reward'}
             </button>
           </div>
 

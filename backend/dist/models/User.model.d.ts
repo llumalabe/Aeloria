@@ -13,6 +13,7 @@ export interface IUser extends Document {
     maxEnergy: number;
     lastEnergyReset: Date;
     lastLoginDate: Date;
+    lastDailyReward?: Date;
     loginStreak: number;
     totalPlayTime: number;
     referralCode: string;
@@ -20,15 +21,15 @@ export interface IUser extends Document {
     achievements: string[];
     seasonPassLevel: number;
     transactions: Array<{
-        txHash: string;
-        type: 'deposit' | 'withdraw' | 'convert';
-        tokenType: 'AETH' | 'RON';
-        amount: string;
-        fee: string;
-        status: 'pending' | 'confirmed' | 'failed';
+        txHash?: string;
+        type: 'deposit' | 'withdraw' | 'convert' | 'Daily Reward';
+        tokenType?: 'AETH' | 'RON';
+        amount: string | number;
+        fee?: string;
+        status: 'pending' | 'confirmed' | 'failed' | 'Completed';
         timestamp: Date;
         blockNumber?: number;
-        verified: boolean;
+        verified?: boolean;
     }>;
     createdAt: Date;
     updatedAt: Date;

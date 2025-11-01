@@ -1,4 +1,11 @@
 import mongoose, { Document } from 'mongoose';
+interface GuildBonuses {
+    expBonus: number;
+    goldBonus: number;
+    dropRateBonus: number;
+    damageBonus?: number;
+    defenseBonus?: number;
+}
 export interface IGuild extends Document {
     name: string;
     description: string;
@@ -13,7 +20,7 @@ export interface IGuild extends Document {
     maxMembers: number;
     guildHall: {
         level: number;
-        bonuses: any;
+        bonuses: GuildBonuses;
     };
     treasury: {
         gold: number;

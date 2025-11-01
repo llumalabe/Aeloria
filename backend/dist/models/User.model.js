@@ -99,6 +99,9 @@ const UserSchema = new mongoose_1.Schema({
         type: Date,
         default: Date.now,
     },
+    lastDailyReward: {
+        type: Date,
+    },
     loginStreak: {
         type: Number,
         default: 1,

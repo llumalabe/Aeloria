@@ -1,14 +1,25 @@
 'use client';
 
 import { useState } from 'react';
+import { ethers } from 'ethers';
+
+interface UserData {
+  walletAddress: string;
+  username: string;
+  gold: number;
+  premium: number;
+  tokens: number;
+  level: number;
+  exp: number;
+}
 
 interface WalletModalProps {
   isOpen: boolean;
   onClose: () => void;
-  userData: any;
+  userData: UserData | null;
   blockchainBalances: { aethBalance: string; ronBalance: string };
-  signer: any;
-  provider: any;
+  signer: ethers.Signer | null;
+  provider: ethers.BrowserProvider | null;
   address: string | null;
   onDeposit: (amount: string) => Promise<void>;
   onConvert: (amount: string) => Promise<void>;
