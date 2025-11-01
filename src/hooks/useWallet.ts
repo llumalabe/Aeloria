@@ -38,12 +38,37 @@ export const useWallet = create<WalletState>()(
 
   connect: async (walletType?: WalletType) => {
     try {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      // Mobile: Always use deep links first
+      if (isMobile) {
+        const currentUrl = window.location.href;
+        
+        if (walletType === 'ronin' || walletType === 'ronin-waypoint' || !walletType) {
+          // Open Ronin Wallet app
+          const roninDeepLink = `ronin://browser?url=${encodeURIComponent(currentUrl)}`;
+          window.location.href = roninDeepLink;
+          
+          // Fallback to download page if app not installed
+          setTimeout(() => {
+            window.location.href = 'https://wallet.roninchain.com/';
+          }, 2500);
+          
+          throw new Error('Opening Ronin Wallet app...');
+        } else if (walletType === 'metamask') {
+          // Open MetaMask app
+          const metamaskDeepLink = `https://metamask.app.link/dapp/${encodeURIComponent(currentUrl)}`;
+          window.location.href = metamaskDeepLink;
+          
+          throw new Error('Opening MetaMask app...');
+        }
+      }
+      
+      // Desktop: Check for extension
       let provider = null;
       let selectedWalletType: WalletType | null = null;
 
-      // Connect based on specified wallet type
       if (walletType === 'ronin' || walletType === 'ronin-waypoint') {
-        // Ronin Wallet or Ronin Waypoint
         if (window.ronin?.provider) {
           provider = window.ronin.provider;
           selectedWalletType = walletType;
@@ -52,7 +77,6 @@ export const useWallet = create<WalletState>()(
           throw new Error('Ronin Wallet is not installed. Please install Ronin Wallet extension.');
         }
       } else if (walletType === 'metamask') {
-        // MetaMask
         if (window.ethereum && window.ethereum.isMetaMask) {
           provider = window.ethereum;
           selectedWalletType = 'metamask';
@@ -61,10 +85,9 @@ export const useWallet = create<WalletState>()(
           throw new Error('MetaMask is not installed. Please install MetaMask extension.');
         }
       } else if (walletType === 'walletconnect') {
-        // WalletConnect - will be implemented with WalletConnect SDK
         throw new Error('WalletConnect support coming soon!');
       } else {
-        // Auto-detect wallet (backward compatibility)
+        // Auto-detect wallet
         if (window.ronin?.provider) {
           provider = window.ronin.provider;
           selectedWalletType = 'ronin';
@@ -77,34 +100,7 @@ export const useWallet = create<WalletState>()(
       }
 
       if (!provider) {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        if (isMobile) {
-          // Mobile: Show deep link options
-          const currentUrl = window.location.href;
-          const roninDeepLink = `ronin://browser?url=${encodeURIComponent(currentUrl)}`;
-          const metamaskDeepLink = `https://metamask.app.link/dapp/${encodeURIComponent(currentUrl)}`;
-          
-          // Try Ronin Wallet first
-          const tryRonin = confirm(
-            '🎮 Aeloria requires a Web3 wallet\n\n' +
-            'Click OK to open in Ronin Wallet\n' +
-            'or Cancel to try MetaMask'
-          );
-          
-          if (tryRonin) {
-            window.location.href = roninDeepLink;
-            // Fallback to Ronin download page
-            setTimeout(() => {
-              window.location.href = 'https://wallet.roninchain.com/';
-            }, 2000);
-          } else {
-            window.location.href = metamaskDeepLink;
-          }
-          
-          throw new Error('Redirecting to wallet app...');
-        } else {
-          throw new Error('Please install Ronin Wallet or MetaMask extension');
-        }
+        throw new Error('Please install Ronin Wallet or MetaMask extension');
       }
 
       const ethersProvider = new ethers.BrowserProvider(provider);
