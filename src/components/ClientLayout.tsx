@@ -26,7 +26,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
         </button>
 
-        <main className="flex-grow py-8">
+        <main className="flex-grow w-full">
           {children}
         </main>
         <Footer />
