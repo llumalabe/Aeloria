@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 
 interface Transaction {
-  type: 'deposit' | 'withdraw';
-  tokenType: 'AETH' | 'RON';
+  type: 'deposit' | 'withdraw' | 'convert' | 'Daily Reward';
+  tokenType?: 'AETH' | 'RON';
   amount: string;
   fee?: string;
-  txHash: string;
+  txHash?: string;
   timestamp: string;
-  status: 'pending' | 'confirmed' | 'failed';
+  status: 'pending' | 'confirmed' | 'failed' | 'Completed';
 }
 
 interface TransactionHistoryProps {
@@ -47,8 +47,8 @@ export default function TransactionHistory({ walletAddress }: TransactionHistory
       // Handle both response formats: { success: true, transactions: [...] } or { transactions: [...] }
       if (data.transactions) {
         console.log('Setting transactions:', data.transactions.length, 'items');
-        // Reverse to show latest first
-        setTransactions(data.transactions.reverse());
+        // Backend already sorts by timestamp descending (newest first)
+        setTransactions(data.transactions);
       } else {
         console.warn('No transactions field in response:', data);
       }
@@ -68,11 +68,23 @@ export default function TransactionHistory({ walletAddress }: TransactionHistory
   };
 
   const getTypeColor = (type: string) => {
-    return type === 'deposit' ? 'text-green-400' : 'text-red-400';
+    switch (type) {
+      case 'deposit': return 'text-green-400';
+      case 'withdraw': return 'text-red-400';
+      case 'convert': return 'text-purple-400';
+      case 'Daily Reward': return 'text-yellow-400';
+      default: return 'text-gray-400';
+    }
   };
 
   const getTypeIcon = (type: string) => {
-    return type === 'deposit' ? '📥' : '📤';
+    switch (type) {
+      case 'deposit': return '📥';
+      case 'withdraw': return '📤';
+      case 'convert': return '🔄';
+      case 'Daily Reward': return '🎁';
+      default: return '💰';
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -80,9 +92,10 @@ export default function TransactionHistory({ walletAddress }: TransactionHistory
       confirmed: 'bg-green-600',
       pending: 'bg-yellow-600',
       failed: 'bg-red-600',
+      Completed: 'bg-green-600',
     };
     return (
-      <span className={`px-2 py-1 rounded text-xs ${colors[status as keyof typeof colors]}`}>
+      <span className={`px-2 py-1 rounded text-xs ${colors[status as keyof typeof colors] || 'bg-gray-600'}`}>
         {status}
       </span>
     );
@@ -152,7 +165,7 @@ export default function TransactionHistory({ walletAddress }: TransactionHistory
             <div
               key={index}
               className="bg-gray-800/50 rounded-lg p-4 hover:bg-gray-800 transition-colors cursor-pointer"
-              onClick={() => openInExplorer(tx.txHash)}
+              onClick={() => tx.txHash && openInExplorer(tx.txHash)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -161,13 +174,17 @@ export default function TransactionHistory({ walletAddress }: TransactionHistory
                     <span className={`font-bold ${getTypeColor(tx.type)} capitalize`}>
                       {tx.type}
                     </span>
-                    <span className="text-gray-400">•</span>
-                    <span className="text-gray-300">{tx.tokenType}</span>
-                    {tx.tokenType === 'AETH' ? '🔮' : '🔷'}
+                    {tx.tokenType && (
+                      <>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-gray-300">{tx.tokenType}</span>
+                        {tx.tokenType === 'AETH' ? '🔮' : '🔷'}
+                      </>
+                    )}
                   </div>
                   
                   <div className="text-2xl font-bold text-white mb-2">
-                    {parseFloat(tx.amount).toFixed(4)} {tx.tokenType}
+                    {parseFloat(tx.amount).toFixed(4)} {tx.tokenType || ''}
                   </div>
 
                   {tx.fee && parseFloat(tx.fee) > 0 && (
@@ -178,22 +195,28 @@ export default function TransactionHistory({ walletAddress }: TransactionHistory
 
                   <div className="flex items-center gap-2 text-xs text-gray-400">
                     <span>{formatDate(tx.timestamp)}</span>
-                    <span>•</span>
-                    <span className="font-mono">{tx.txHash.slice(0, 10)}...{tx.txHash.slice(-8)}</span>
+                    {tx.txHash && (
+                      <>
+                        <span>•</span>
+                        <span className="font-mono">{tx.txHash.slice(0, 10)}...{tx.txHash.slice(-8)}</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-2">
                   {getStatusBadge(tx.status)}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openInExplorer(tx.txHash);
-                    }}
-                    className="text-xs text-blue-400 hover:text-blue-300"
-                  >
-                    View on Explorer →
-                  </button>
+                  {tx.txHash && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openInExplorer(tx.txHash!);
+                      }}
+                      className="text-xs text-blue-400 hover:text-blue-300"
+                    >
+                      View on Explorer →
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

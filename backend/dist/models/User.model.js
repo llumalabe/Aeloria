@@ -126,12 +126,12 @@ const UserSchema = new mongoose_1.Schema({
         default: 0,
     },
     transactions: [{
-            txHash: { type: String, required: true },
-            type: { type: String, enum: ['deposit', 'withdraw', 'convert'], required: true },
-            tokenType: { type: String, enum: ['AETH', 'RON'], required: true },
+            txHash: { type: String, required: false },
+            type: { type: String, enum: ['deposit', 'withdraw', 'convert', 'Daily Reward'], required: true },
+            tokenType: { type: String, enum: ['AETH', 'RON'], required: false },
             amount: { type: String, required: true },
             fee: { type: String, default: '0' },
-            status: { type: String, enum: ['pending', 'confirmed', 'failed'], default: 'confirmed' },
+            status: { type: String, enum: ['pending', 'confirmed', 'failed', 'Completed'], default: 'confirmed' },
             timestamp: { type: Date, default: Date.now },
             blockNumber: { type: Number },
             verified: { type: Boolean, default: false }
