@@ -1,22 +1,30 @@
 ﻿import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Use standalone instead of export to skip static generation  
   reactStrictMode: true,
-  
+
+  // Force dynamic rendering - no static generation
+  output: 'standalone',
+
   // Disable image optimization
   images: {
     unoptimized: true,
   },
-  
+
   // Disable ESLint during build
   eslint: {
     ignoreDuringBuilds: true,
   },
-  
+
   // Disable TypeScript errors during build
   typescript: {
     ignoreBuildErrors: true,
+  },
+
+  // Experimental features to prevent static generation
+  experimental: {
+    // Disable static generation for app router
+    isrMemoryCacheSize: 0,
   },
 
   // Webpack config
