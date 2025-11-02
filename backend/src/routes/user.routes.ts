@@ -1,12 +1,20 @@
 import { Router, Request, Response } from 'express';
 import User from '../models/User.model';
-import Character, { CharacterClass } from '../models/Character.model';
+import Character, { CharacterClass, Rarity } from '../models/Character.model';
 
 const router = Router();
 
 // Get base stats for Warrior
 const getWarriorStats = () => {
   return { hp: 150, maxHp: 150, str: 15, agi: 8, int: 5, luk: 7, vit: 12 };
+};
+
+// Get Warrior passive skills
+const getWarriorPassiveSkills = () => {
+  return [
+    { name: 'Iron Will', description: 'Increased defense and HP regeneration', effect: '+15% VIT, +2% HP Regen per turn' },
+    { name: 'Battle Rage', description: 'Deal more damage when HP is low', effect: '+20% STR when HP < 30%' },
+  ];
 };
 
 // POST /api/users/register - Register new user
@@ -55,13 +63,19 @@ router.post('/register', async (req, res) => {
 
     // Auto-create starter Warrior character
     const starterStats = getWarriorStats();
+    const starterPassiveSkills = getWarriorPassiveSkills();
+    
     const starterCharacter = new Character({
       walletAddress: normalizedAddress,
       characterName: 'Starter Warrior',
       characterClass: CharacterClass.WARRIOR,
+      rarity: Rarity.COMMON,
       level: 1,
       exp: 0,
+      expRequired: 100,
       ...starterStats,
+      passiveSkills: starterPassiveSkills,
+      equipment: {}, // Empty equipment slots
       isNFT: false,
       isBoundToAccount: true,
       tokenId: null,
