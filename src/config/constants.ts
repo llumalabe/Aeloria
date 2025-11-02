@@ -5,7 +5,7 @@ export const CONTRACT_ADDRESSES = {
   MARKETPLACE: process.env.NEXT_PUBLIC_MARKETPLACE_CONTRACT || '',
 };
 
-export const RONIN_CHAIN_ID = Number(process.env.NEXT_PUBLIC_RONIN_CHAIN_ID) || 2021;
+export const RONIN_CHAIN_ID = Number(process.env.NEXT_PUBLIC_RONIN_CHAIN_ID) || 2020; // Default to Ronin Mainnet
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export const CHARACTER_CLASSES = [
