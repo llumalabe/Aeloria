@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import Character, { CharacterClass } from '../models/Character.model';
+import Character, { CharacterClass, Rarity } from '../models/Character.model';
 
 const router = Router();
 
@@ -14,6 +14,37 @@ const getBaseStats = (characterClass: CharacterClass) => {
     [CharacterClass.PALADIN]: { hp: 140, maxHp: 140, str: 12, agi: 9, int: 10, luk: 8, vit: 13 },
   };
   return baseStats[characterClass];
+};
+
+// Get passive skills for each class
+const getClassPassiveSkills = (characterClass: CharacterClass) => {
+  const passives = {
+    [CharacterClass.WARRIOR]: [
+      { name: 'Iron Will', description: 'Increased defense and HP regeneration', effect: '+15% VIT, +2% HP Regen per turn' },
+      { name: 'Battle Rage', description: 'Deal more damage when HP is low', effect: '+20% STR when HP < 30%' },
+    ],
+    [CharacterClass.MAGE]: [
+      { name: 'Arcane Mastery', description: 'Enhanced magical power', effect: '+20% INT, +10% Magic DMG' },
+      { name: 'Mana Shield', description: 'Chance to avoid damage', effect: '15% chance to dodge attacks' },
+    ],
+    [CharacterClass.ARCHER]: [
+      { name: 'Eagle Eye', description: 'Increased critical hit chance', effect: '+15% Critical Rate' },
+      { name: 'Swift Shot', description: 'Attack first in combat', effect: '+25% AGI, Always attack first' },
+    ],
+    [CharacterClass.ROGUE]: [
+      { name: 'Shadow Step', description: 'Extreme evasion and luck', effect: '+20% AGI, +15% LUK' },
+      { name: 'Backstab', description: 'Massive critical damage', effect: '+50% Critical DMG' },
+    ],
+    [CharacterClass.CLERIC]: [
+      { name: 'Divine Blessing', description: 'Heal after each battle', effect: 'Restore 20% HP after combat' },
+      { name: 'Holy Light', description: 'Increased magic and healing', effect: '+15% INT, +10% Healing' },
+    ],
+    [CharacterClass.PALADIN]: [
+      { name: 'Holy Shield', description: 'Reduce incoming damage', effect: '-20% DMG taken' },
+      { name: 'Guardian', description: 'Balanced offense and defense', effect: '+10% STR, +10% VIT' },
+    ],
+  };
+  return passives[characterClass];
 };
 
 // GET /api/characters/:walletAddress - Get all characters for wallet
@@ -77,13 +108,19 @@ router.post('/create-starter', async (req: Request, res: Response) => {
 
     // Create starter Warrior
     const baseStats = getBaseStats(CharacterClass.WARRIOR);
+    const passiveSkills = getClassPassiveSkills(CharacterClass.WARRIOR);
+    
     const starterCharacter = new Character({
       walletAddress: normalizedAddress,
       characterName: 'Starter Warrior',
       characterClass: CharacterClass.WARRIOR,
+      rarity: 0, // COMMON
       level: 1,
       exp: 0,
+      expRequired: 100,
       ...baseStats,
+      passiveSkills,
+      equipment: {}, // Empty equipment
       isNFT: false,
       isBoundToAccount: true,
       tokenId: null,
@@ -144,7 +181,7 @@ router.post('/import-nft', async (req: Request, res: Response) => {
 // POST /api/characters/add-from-gacha - Add character from gacha summon
 router.post('/add-from-gacha', async (req: Request, res: Response) => {
   try {
-    const { walletAddress, tokenId, characterClass, characterName } = req.body;
+    const { walletAddress, tokenId, characterClass, characterName, rarity } = req.body;
 
     if (!walletAddress || tokenId === undefined || characterClass === undefined) {
       return res.status(400).json({ 
@@ -164,17 +201,22 @@ router.post('/add-from-gacha', async (req: Request, res: Response) => {
       });
     }
 
-    // Get base stats for the class
+    // Get base stats and passive skills for the class
     const baseStats = getBaseStats(characterClass);
+    const passiveSkills = getClassPassiveSkills(characterClass);
     
     // Create new NFT character (initially in wallet, not bound)
     const newCharacter = new Character({
       walletAddress: normalizedAddress,
       characterName: characterName || `${CharacterClass[characterClass]} Hero`,
       characterClass,
+      rarity: rarity || 0,
       level: 1,
       exp: 0,
+      expRequired: 100,
       ...baseStats,
+      passiveSkills,
+      equipment: {},
       isNFT: true,
       isBoundToAccount: false, // Starts in wallet
       tokenId,
@@ -302,6 +344,86 @@ router.delete('/:id', async (req: Request, res: Response) => {
     res.json({
       success: true,
       message: 'Character deleted'
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/characters/:id/equip - Equip item to character
+router.post('/:id/equip', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { slot, itemId, itemName, itemType, stats } = req.body;
+
+    // Validate slot
+    const validSlots = ['weapon', 'armor', 'accessory1', 'accessory2', 'accessory3'];
+    if (!validSlots.includes(slot)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid slot. Use: weapon, armor, accessory1, accessory2, accessory3' 
+      });
+    }
+
+    const character = await Character.findById(id);
+    if (!character) {
+      return res.status(404).json({ success: false, error: 'Character not found' });
+    }
+
+    // Equip the item
+    if (!character.equipment) {
+      character.equipment = {};
+    }
+
+    character.equipment[slot as keyof typeof character.equipment] = {
+      itemId: itemId || undefined,
+      itemName: itemName || undefined,
+      itemType: itemType || undefined,
+      stats: stats || { str: 0, agi: 0, int: 0, luk: 0, vit: 0, hp: 0 },
+    };
+
+    await character.save();
+
+    res.json({
+      success: true,
+      message: `${itemName || 'Item'} equipped to ${slot}`,
+      character
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// POST /api/characters/:id/unequip - Unequip item from character
+router.post('/:id/unequip', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { slot } = req.body;
+
+    const validSlots = ['weapon', 'armor', 'accessory1', 'accessory2', 'accessory3'];
+    if (!validSlots.includes(slot)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid slot' 
+      });
+    }
+
+    const character = await Character.findById(id);
+    if (!character) {
+      return res.status(404).json({ success: false, error: 'Character not found' });
+    }
+
+    // Unequip the item
+    if (character.equipment && character.equipment[slot as keyof typeof character.equipment]) {
+      character.equipment[slot as keyof typeof character.equipment] = undefined;
+    }
+
+    await character.save();
+
+    res.json({
+      success: true,
+      message: `Unequipped ${slot}`,
+      character
     });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
