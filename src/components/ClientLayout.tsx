@@ -8,8 +8,9 @@ import { TantoProvider } from '@sky-mavis/tanto-widget';
 import { wagmiConfig } from '@/lib/wagmi';
 import Footer from './Footer';
 
-// Lazy load Sidebar to prevent SSR issues
+// Lazy load components to prevent SSR issues
 const Sidebar = dynamic(() => import('./Sidebar'), { ssr: false });
+const WalletReconnect = dynamic(() => import('./WalletReconnect'), { ssr: false });
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -18,7 +19,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   // Create QueryClient inside component to prevent SSR issues
   const [queryClient] = useState(() => new QueryClient());
 
-  // Only render Sidebar after client-side hydration
+  // Only render after client-side hydration
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -35,7 +36,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           }}
         >
           <div className="min-h-screen bg-black text-white">
-            {/* Only render Sidebar after mounted to avoid SSR issues */}
+            {/* Only render after mounted to avoid SSR issues */}
+            {mounted && <WalletReconnect />}
             {mounted && <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}
 
             {/* Hamburger for Mobile */}

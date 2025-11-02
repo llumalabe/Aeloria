@@ -1,7 +1,6 @@
 ﻿import type { Metadata } from "next";
 import { Inter, Cinzel } from "next/font/google";
 import "./globals.css";
-import WalletReconnect from "@/components/WalletReconnect";
 import ClientLayout from "@/components/ClientLayout";
 
 const inter = Inter({
@@ -36,7 +35,6 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${cinzel.variable} antialiased`}
       >
-        <WalletReconnect />
         <ClientLayout>
           {children}
         </ClientLayout>
