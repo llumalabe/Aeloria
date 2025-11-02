@@ -30,7 +30,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <TantoProvider
           theme="dark"
           config={{
-            initialChainId: 2020, // Ronin Mainnet
+            initialChainId: 2021, // Saigon Testnet
             hideConnectSuccessPrompt: false, // Show success animation
             disableProfile: false, // Show profile modal
           }}

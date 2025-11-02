@@ -20,17 +20,17 @@ export const wagmiConfig = getDefaultConfig({
     enable: !!process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID, // Only enable if projectId exists
   },
 
-  // Ronin Waypoint (keyless wallet) configuration - support both Mainnet & Testnet
+  // Ronin Waypoint (keyless wallet) configuration - Saigon Testnet for testing
   keylessWalletConfig: process.env.NEXT_PUBLIC_WAYPOINT_CLIENT_ID
     ? {
-        chainId: 2020, // ✅ Ronin Mainnet (was 2021 - Testnet only)
+        chainId: 2021, // Saigon Testnet
         clientId: process.env.NEXT_PUBLIC_WAYPOINT_CLIENT_ID,
         waypointOrigin: 'https://waypoint.roninchain.com',
         popupCloseDelay: 1000,
         enable: true,
       }
     : {
-        chainId: 2020, // Default to Mainnet
+        chainId: 2021, // Default to Testnet
         clientId: '',
         enable: false, // Disable if no clientId
       },
