@@ -1,7 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+// Force dynamic rendering to prevent SSR issues with Wagmi
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
+import { useState, useEffect, Suspense } from 'react';
 import { useWallet } from '@/hooks/useWallet';
+import { TantoConnectButton } from '@sky-mavis/tanto-widget';
 import BackToTown from '@/components/BackToTown';
 
 interface Character {
@@ -26,7 +31,7 @@ const CLASS_NAMES = ['Warrior', 'Mage', 'Archer', 'Rogue', 'Cleric', 'Paladin'];
 const CLASS_ICONS = ['⚔️', '🔮', '🏹', '🗡️', '✨', '🛡️'];
 
 export default function CharactersPage() {
-  const { address, connect } = useWallet();
+  const { address } = useWallet();
   const [activeTab, setActiveTab] = useState<'ingame' | 'wallet'>('ingame');
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,12 +96,9 @@ export default function CharactersPage() {
         <div className="text-center p-8">
           <h1 className="text-4xl font-bold text-yellow-400 mb-4">⚔️ My Characters</h1>
           <p className="text-gray-300 mb-6">Please connect your wallet to view your characters</p>
-          <button
-            onClick={() => connect()}
-            className="bg-yellow-500 hover:bg-yellow-600 text-black px-8 py-4 rounded-lg font-bold text-lg"
-          >
-            Connect Wallet
-          </button>
+          <div className="flex justify-center">
+            <TantoConnectButton />
+          </div>
         </div>
       </div>
     );

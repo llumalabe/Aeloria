@@ -2,26 +2,18 @@
 
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/hooks/useWallet';
+import { TantoConnectButton } from '@sky-mavis/tanto-widget';
 import { useEffect } from 'react';
 
 export default function Home() {
   const router = useRouter();
-  const { isConnected, connect } = useWallet();
+  const { isConnected } = useWallet();
 
   useEffect(() => {
     if (isConnected) {
       router.push('/dashboard');
     }
   }, [isConnected, router]);
-
-  const handleConnect = async () => {
-    try {
-      await connect();
-      router.push('/dashboard');
-    } catch (error) {
-      alert('Please install Ronin Wallet extension to continue');
-    }
-  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900">
@@ -35,12 +27,9 @@ export default function Home() {
               </h1>
               <p className="text-sm text-amber-200">Guardians of the Eternal Sigils</p>
             </div>
-            <button
-              onClick={handleConnect}
-              className="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 rounded-lg font-bold shadow-lg transition-all transform hover:scale-105"
-            >
-              Connect Ronin Wallet
-            </button>
+            <div className="flex items-center">
+              <TantoConnectButton />
+            </div>
           </div>
         </div>
       </header>
@@ -57,12 +46,9 @@ export default function Home() {
             and earn legendary rewards!
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
-            <button
-              onClick={handleConnect}
-              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-lg font-bold shadow-xl transition-all transform hover:scale-105"
-            >
-              🎮 Start Adventure
-            </button>
+            <div className="flex items-center">
+              <TantoConnectButton />
+            </div>
             <button
               onClick={() => window.open('https://docs.roninchain.com', '_blank')}
               className="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg font-bold shadow-xl transition-all transform hover:scale-105"
@@ -138,12 +124,9 @@ export default function Home() {
           <p className="text-xl text-amber-100 mb-8">
             Connect your Ronin Wallet and start your adventure in Aeloria today!
           </p>
-          <button
-            onClick={handleConnect}
-            className="px-12 py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 rounded-lg font-bold text-xl shadow-xl transition-all transform hover:scale-110"
-          >
-            🚀 Connect Wallet & Play
-          </button>
+          <div className="flex justify-center">
+            <TantoConnectButton />
+          </div>
         </div>
       </section>
 

@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useWallet } from '@/hooks/useWallet';
 import BackToTown from '@/components/BackToTown';
 import { useRouter } from 'next/navigation';

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useWallet, type WalletType } from '@/hooks/useWallet';
+import { useWallet } from '@/hooks/useWallet';
+import { TantoConnectButton } from '@sky-mavis/tanto-widget';
 import { useState, useEffect } from 'react';
 
 interface HeaderProps {
@@ -10,11 +11,9 @@ interface HeaderProps {
 }
 
 export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
-  const { address, connect, disconnect } = useWallet();
-  const [showWalletModal, setShowWalletModal] = useState(false);
+  const { address, disconnect } = useWallet();
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,17 +22,6 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleConnectWallet = async (walletType: WalletType) => {
-    try {
-      setError('');
-      await connect(walletType);
-      setShowWalletModal(false);
-    } catch (error: any) {
-      console.error('Failed to connect:', error);
-      setError(error.message || 'Failed to connect wallet');
-    }
-  };
 
   const handleDisconnect = () => {
     disconnect();
@@ -119,105 +107,15 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
                   )}
                 </div>
               ) : (
-                /* Connect Wallet Button */
-                <button
-                  onClick={() => setShowWalletModal(true)}
-                  className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold px-6 py-3 rounded-lg transition-all transform hover:scale-105"
-                >
-                  🔗 Connect Wallet
-                </button>
+                /* Tanto Connect Wallet Button */
+                <div className="flex items-center">
+                  <TantoConnectButton />
+                </div>
               )}
             </div>
           </div>
         </div>
       </header>
-
-      {/* Wallet Connection Modal */}
-      {showWalletModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-yellow-500 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-yellow-400">Connect a Wallet</h2>
-              <button
-                onClick={() => setShowWalletModal(false)}
-                className="text-gray-400 hover:text-white text-2xl"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-sm text-gray-400 mb-4">Installed</p>
-              
-              {/* Ronin Wallet */}
-              <button
-                onClick={() => handleConnectWallet('ronin')}
-                className="w-full bg-gray-800 hover:bg-gray-700 border-2 border-gray-600 hover:border-yellow-500 rounded-lg p-4 flex items-center gap-4 transition-all group"
-              >
-                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-2xl">
-                  🦊
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-bold text-white group-hover:text-yellow-400">Ronin Wallet</p>
-                  <p className="text-xs text-gray-400">Connect to Ronin Network</p>
-                </div>
-              </button>
-
-              <p className="text-sm text-gray-400 mt-6 mb-2">Recent</p>
-              
-              {/* Ronin Waypoint */}
-              <button
-                onClick={() => handleConnectWallet('ronin-waypoint')}
-                className="w-full bg-gray-800 hover:bg-gray-700 border-2 border-gray-600 hover:border-yellow-500 rounded-lg p-4 flex items-center gap-4 transition-all group"
-              >
-                <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-2xl">
-                  🌉
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-bold text-white group-hover:text-yellow-400">Ronin Waypoint</p>
-                  <p className="text-xs text-gray-400">Ronin Browser Wallet</p>
-                </div>
-              </button>
-
-              {/* MetaMask */}
-              <button
-                onClick={() => handleConnectWallet('metamask')}
-                className="w-full bg-gray-800 hover:bg-gray-700 border-2 border-gray-600 hover:border-yellow-500 rounded-lg p-4 flex items-center gap-4 transition-all group"
-              >
-                <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center text-2xl">
-                  🦊
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-bold text-white group-hover:text-yellow-400">MetaMask</p>
-                  <p className="text-xs text-gray-400">Popular Web3 Wallet</p>
-                </div>
-              </button>
-
-              {/* WalletConnect */}
-              <button
-                onClick={() => handleConnectWallet('walletconnect')}
-                className="w-full bg-gray-800 hover:bg-gray-700 border-2 border-gray-600 hover:border-yellow-500 rounded-lg p-4 flex items-center gap-4 transition-all group"
-              >
-                <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center text-2xl">
-                  🔗
-                </div>
-                <div className="text-left flex-1">
-                  <p className="font-bold text-white group-hover:text-yellow-400">WalletConnect</p>
-                  <p className="text-xs text-gray-400">Scan with your mobile wallet</p>
-                </div>
-              </button>
-              
-              {error && (
-                <div className="mt-4 p-3 bg-red-900/50 border border-red-500 rounded-lg">
-                  <p className="text-red-400 text-sm">{error}</p>
-                </div>
-              )}
-            </div>            <p className="text-xs text-gray-500 text-center mt-6">
-              By connecting, you agree to our Terms of Service
-            </p>
-          </div>
-        </div>
-      )}
     </>
   );
 }

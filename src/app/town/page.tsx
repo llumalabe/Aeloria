@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useWallet } from '@/hooks/useWallet';
 import useAuth from '@/hooks/useAuth';
 import Link from 'next/link';

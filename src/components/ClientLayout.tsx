@@ -1,18 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TantoProvider } from '@sky-mavis/tanto-widget';
 import { wagmiConfig } from '@/lib/wagmi';
-import Sidebar from './Sidebar';
 import Footer from './Footer';
 
-// Create QueryClient instance
-const queryClient = new QueryClient();
+// Lazy load Sidebar to prevent SSR issues
+const Sidebar = dynamic(() => import('./Sidebar'), { ssr: false });
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Create QueryClient inside component to prevent SSR issues
+  const [queryClient] = useState(() => new QueryClient());
 
   return (
     <WagmiProvider config={wagmiConfig}>

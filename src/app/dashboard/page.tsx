@@ -1,6 +1,8 @@
 ﻿'use client';
 
-import { useEffect } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { useState, useEffect } from 'react';
 import { useWallet } from '@/hooks/useWallet';
 import useAuth from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';

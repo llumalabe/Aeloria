@@ -36,4 +36,7 @@ export const wagmiConfig = getDefaultConfig({
 
   // Enable multi-injected provider discovery (EIP-6963)
   multiInjectedProviderDiscovery: true,
+
+  // Disable SSR to prevent prerendering issues
+  ssr: false,
 });
