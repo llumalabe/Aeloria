@@ -71,10 +71,22 @@ export default function CharactersPage() {
       const data = await response.json();
       
       if (data.success) {
-        setCharacters(data.characters);
+        // Ensure characters is always an array
+        const chars = Array.isArray(data.characters) ? data.characters : [];
+        
+        // Normalize passiveSkills to always be an array
+        const normalizedChars = chars.map((char: Character) => ({
+          ...char,
+          passiveSkills: Array.isArray(char.passiveSkills) ? char.passiveSkills : [],
+        }));
+        
+        setCharacters(normalizedChars);
+      } else {
+        setCharacters([]);
       }
     } catch (error) {
       console.error('Failed to load characters:', error);
+      setCharacters([]);
     } finally {
       setLoading(false);
     }
@@ -201,7 +213,7 @@ export default function CharactersPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {characters.map((char) => (
+            {Array.isArray(characters) && characters.map((char) => (
               <div
                 key={char._id}
                 onClick={() => setSelectedCharacter(char)}
@@ -274,7 +286,7 @@ export default function CharactersPage() {
                 </div>
 
                 {/* Passive Skills Preview */}
-                {char.passiveSkills && char.passiveSkills.length > 0 && (
+                {char.passiveSkills && Array.isArray(char.passiveSkills) && char.passiveSkills.length > 0 && (
                   <div className="mb-3">
                     <p className="text-xs text-gray-400 mb-1">⭐ Passive Skills:</p>
                     <div className="space-y-1">
@@ -429,7 +441,7 @@ export default function CharactersPage() {
               </div>
 
               {/* Passive Skills */}
-              {selectedCharacter.passiveSkills && selectedCharacter.passiveSkills.length > 0 && (
+              {selectedCharacter.passiveSkills && Array.isArray(selectedCharacter.passiveSkills) && selectedCharacter.passiveSkills.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-xl font-bold text-yellow-400 mb-3">⭐ Passive Skills</h3>
                   <div className="space-y-3">
