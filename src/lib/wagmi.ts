@@ -6,9 +6,9 @@ export const wagmiConfig = getDefaultConfig({
   // App metadata
   appMetadata: {
     appName: 'Aeloria: Guardians of the Eternal Sigils',
-    appIcon: 'https://aeloria.vercel.app/icon.png',
+    appIcon: 'https://aeloria-two.vercel.app/icon.png',
     appDescription: 'Web3 Fantasy RPG on Ronin Network - Explore dungeons, battle bosses, and earn AETH tokens',
-    appUrl: 'https://aeloria.vercel.app',
+    appUrl: typeof window !== 'undefined' ? window.location.origin : 'https://aeloria-two.vercel.app',
   },
 
   // Supported chains: Ronin Mainnet (2020) and Saigon Testnet (2021)
