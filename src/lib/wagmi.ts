@@ -1,5 +1,6 @@
 ﻿import { getDefaultConfig } from '@sky-mavis/tanto-widget';
 import { ronin, saigon } from 'viem/chains';
+import { createStorage } from 'wagmi';
 
 // Tanto Widget Configuration for Aeloria
 export const wagmiConfig = getDefaultConfig({
@@ -45,4 +46,15 @@ export const wagmiConfig = getDefaultConfig({
 
   // Disable SSR to prevent prerendering issues
   ssr: false,
+  
+  // Use noopStorage for SSR compatibility
+  storage: typeof window !== 'undefined' && typeof indexedDB !== 'undefined' 
+    ? createStorage({ storage: window.localStorage })
+    : createStorage({ 
+        storage: {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+        }
+      }),
 });
