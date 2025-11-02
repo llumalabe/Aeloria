@@ -1,4 +1,4 @@
-import { getDefaultConfig } from '@sky-mavis/tanto-widget';
+﻿import { getDefaultConfig } from '@sky-mavis/tanto-widget';
 import { ronin, saigon } from 'viem/chains';
 
 // Tanto Widget Configuration for Aeloria
@@ -16,18 +16,24 @@ export const wagmiConfig = getDefaultConfig({
 
   // WalletConnect configuration
   walletConnectConfig: {
-    projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'default_project_id',
-    enable: true,
+    projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '',
+    enable: !!process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID, // Only enable if projectId exists
   },
 
-  // Ronin Waypoint (keyless wallet) configuration
-  keylessWalletConfig: {
-    chainId: 2021, // Saigon Testnet
-    clientId: process.env.NEXT_PUBLIC_WAYPOINT_CLIENT_ID || '',
-    waypointOrigin: 'https://waypoint.roninchain.com',
-    popupCloseDelay: 1000,
-    enable: true,
-  },
+  // Ronin Waypoint (keyless wallet) configuration - only enable if clientId exists
+  keylessWalletConfig: process.env.NEXT_PUBLIC_WAYPOINT_CLIENT_ID
+    ? {
+        chainId: 2021, // Saigon Testnet
+        clientId: process.env.NEXT_PUBLIC_WAYPOINT_CLIENT_ID,
+        waypointOrigin: 'https://waypoint.roninchain.com',
+        popupCloseDelay: 1000,
+        enable: true,
+      }
+    : {
+        chainId: 2021,
+        clientId: '',
+        enable: false, // Disable if no clientId
+      },
 
   // Disable Coinbase Wallet (not needed for Ronin)
   coinbaseWalletConfig: {
