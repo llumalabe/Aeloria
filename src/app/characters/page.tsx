@@ -6,7 +6,7 @@ export const dynamicParams = true;
 
 import { useState, useEffect, Suspense } from 'react';
 import { useWallet } from '@/hooks/useWallet';
-import { TantoConnectButton } from '@sky-mavis/tanto-widget';
+import SafeTantoButton from '@/components/SafeTantoButton';
 import BackToTown from '@/components/BackToTown';
 
 interface Character {
@@ -126,7 +126,7 @@ export default function CharactersPage() {
           <h1 className="text-4xl font-bold text-yellow-400 mb-4">⚔️ My Characters</h1>
           <p className="text-gray-300 mb-6">Please connect your wallet to view your characters</p>
           <div className="flex justify-center">
-            <TantoConnectButton />
+            <SafeTantoButton />
           </div>
         </div>
       </div>
