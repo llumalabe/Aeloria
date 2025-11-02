@@ -1,0 +1,4 @@
+﻿# Vercel ignore file
+.next
+node_modules
+.vercel
