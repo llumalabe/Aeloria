@@ -48,9 +48,18 @@ export default function DungeonExplorer() {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/dungeon/list`)
       const data = await response.json()
-      setDungeons(data)
+      
+      // Ensure data is always an array
+      if (Array.isArray(data)) {
+        setDungeons(data)
+      } else if (data.success && Array.isArray(data.dungeons)) {
+        setDungeons(data.dungeons)
+      } else {
+        setDungeons([])
+      }
     } catch (error) {
       console.error('Failed to fetch dungeons:', error)
+      setDungeons([])
     }
   }
 
@@ -228,7 +237,7 @@ export default function DungeonExplorer() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dungeons.map((dungeon) => (
+            {Array.isArray(dungeons) && dungeons.map((dungeon) => (
               <div
                 key={dungeon._id}
                 className="bg-slate-800/50 border-2 border-purple-500/30 rounded-lg p-6 hover:border-purple-400 transition-all hover:scale-105"
@@ -395,7 +404,7 @@ export default function DungeonExplorer() {
         <div className="bg-slate-800/80 border-2 border-slate-600 rounded-lg p-6">
           <h3 className="text-xl font-bold text-purple-400 mb-4">📜 Event Log</h3>
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {dungeonLog.map((log, index) => (
+            {Array.isArray(dungeonLog) && dungeonLog.map((log, index) => (
               <p key={index} className="text-slate-300 text-sm font-mono">
                 {log}
               </p>

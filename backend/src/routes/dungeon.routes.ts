@@ -7,7 +7,99 @@ const router = Router();
 // GET /api/dungeon/list - Get all available dungeons
 router.get('/list', async (req, res) => {
   try {
-    const dungeons = await Dungeon.find({ isActive: true });
+    let dungeons = await Dungeon.find({ isActive: true });
+    
+    // If no dungeons exist, create default ones
+    if (dungeons.length === 0) {
+      const defaultDungeons = [
+        {
+          name: '🌲 Forest of Whispers',
+          difficulty: 'Easy' as const,
+          minLevel: 1,
+          maxLevel: 5,
+          energyCost: 5,
+          description: 'A mysterious forest filled with weak monsters. Perfect for beginners.',
+          floors: 3,
+          rewards: { 
+            gold: { min: 50, max: 150 }, 
+            exp: { min: 30, max: 80 },
+            items: []
+          },
+          events: [
+            { type: 'combat', title: 'Wild Slime', description: 'A slime blocks your path!', probability: 0.6, effects: {} },
+            { type: 'treasure', title: 'Treasure Chest', description: 'You found a chest!', probability: 0.3, effects: { gold: 100 } },
+            { type: 'rest', title: 'Safe Spot', description: 'A peaceful place to rest.', probability: 0.1, effects: { hp: 50 } },
+          ],
+          boss: {
+            name: 'Forest Guardian',
+            hp: 500,
+            attack: 50,
+            defense: 20,
+            rewards: { gold: 200, exp: 150, items: [] }
+          },
+          isActive: true,
+        },
+        {
+          name: '⛰️ Mountain Cavern',
+          difficulty: 'Normal' as const,
+          minLevel: 5,
+          maxLevel: 10,
+          energyCost: 10,
+          description: 'Dark caves inhabited by goblins and bats.',
+          floors: 5,
+          rewards: { 
+            gold: { min: 150, max: 400 }, 
+            exp: { min: 100, max: 250 },
+            items: []
+          },
+          events: [
+            { type: 'combat', title: 'Goblin Warrior', description: 'An armed goblin attacks!', probability: 0.5, effects: {} },
+            { type: 'trap', title: 'Spike Trap', description: 'Watch your step!', probability: 0.2, effects: { damage: 30 } },
+            { type: 'treasure', title: 'Hidden Loot', description: 'Gold hidden in the rocks!', probability: 0.2, effects: { gold: 200 } },
+            { type: 'rest', title: 'Safe Spot', description: 'Rest here.', probability: 0.1, effects: { hp: 80 } },
+          ],
+          boss: {
+            name: 'Goblin King',
+            hp: 1000,
+            attack: 80,
+            defense: 40,
+            rewards: { gold: 400, exp: 300, items: [] }
+          },
+          isActive: true,
+        },
+        {
+          name: '🏰 Ancient Ruins',
+          difficulty: 'Hard' as const,
+          minLevel: 10,
+          maxLevel: 20,
+          energyCost: 15,
+          description: 'Ruins guarded by powerful undead creatures.',
+          floors: 7,
+          rewards: { 
+            gold: { min: 400, max: 800 }, 
+            exp: { min: 300, max: 600 },
+            items: []
+          },
+          events: [
+            { type: 'combat', title: 'Skeleton Knight', description: 'An undead warrior rises!', probability: 0.6, effects: {} },
+            { type: 'trap', title: 'Curse Trap', description: 'Dark magic drains your health!', probability: 0.2, effects: { damage: 50 } },
+            { type: 'treasure', title: 'Ancient Artifact', description: 'Rare treasure!', probability: 0.1, effects: { gold: 500 } },
+            { type: 'rest', title: 'Meditation Room', description: 'Restore your energy.', probability: 0.1, effects: { hp: 100 } },
+          ],
+          boss: {
+            name: 'Bone Lord',
+            hp: 2000,
+            attack: 120,
+            defense: 60,
+            rewards: { gold: 800, exp: 600, items: [] }
+          },
+          isActive: true,
+        },
+      ];
+
+      dungeons = await Dungeon.insertMany(defaultDungeons);
+    }
+    
     res.json({ success: true, dungeons });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
