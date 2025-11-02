@@ -274,7 +274,8 @@ CharacterSchema.index({ tokenId: 1 }, { unique: true, sparse: true });
 // Calculate EXP required for next level
 CharacterSchema.pre('save', function (next) {
   if (this.isModified('level')) {
-    this.expRequired = Math.floor(100 * Math.pow(this.level, 1.5));
+    const level = this.level as number;
+    this.expRequired = Math.floor(100 * Math.pow(level, 1.5));
   }
   next();
 });
@@ -282,21 +283,21 @@ CharacterSchema.pre('save', function (next) {
 // Virtual: Get total stats (base + equipment)
 CharacterSchema.virtual('totalStats').get(function () {
   const base = {
-    str: this.str,
-    agi: this.agi,
-    int: this.int,
-    luk: this.luk,
-    vit: this.vit,
-    hp: this.maxHp,
+    str: this.str as number,
+    agi: this.agi as number,
+    int: this.int as number,
+    luk: this.luk as number,
+    vit: this.vit as number,
+    hp: this.maxHp as number,
   };
 
-  const equipment = this.equipment;
+  const equipment = this.equipment as ICharacter['equipment'];
   if (!equipment) return base;
 
-  const slots = ['weapon', 'armor', 'accessory1', 'accessory2', 'accessory3'];
+  const slots: Array<keyof typeof equipment> = ['weapon', 'armor', 'accessory1', 'accessory2', 'accessory3'];
 
   slots.forEach((slot) => {
-    const item = equipment[slot as keyof typeof equipment];
+    const item = equipment[slot];
     if (item && item.stats) {
       base.str += item.stats.str || 0;
       base.agi += item.stats.agi || 0;
