@@ -6,12 +6,6 @@ const nextConfig: NextConfig = {
   // Force dynamic rendering - no static generation
   output: 'standalone',
 
-  // Enable instrumentation for polyfills
-  experimental: {
-    instrumentationHook: true,
-    isrMemoryCacheSize: 0, // Force rebuild
-  },
-
   // Disable image optimization
   images: {
     unoptimized: true,
