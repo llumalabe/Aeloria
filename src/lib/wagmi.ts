@@ -1,6 +1,20 @@
 ﻿import { getDefaultConfig } from '@sky-mavis/tanto-widget';
 import { ronin, saigon } from 'viem/chains';
+import { createStorage, noopStorage } from 'wagmi';
 import './polyfills'; // Import polyfills for SSR
+
+// Create safe storage that works in SSR
+const safeStorage = typeof window !== 'undefined' 
+  ? createStorage({ 
+      storage: typeof window.localStorage !== 'undefined' 
+        ? window.localStorage 
+        : {
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+          } as any,
+    })
+  : noopStorage;
 
 // Tanto Widget Configuration for Aeloria
 export const wagmiConfig = getDefaultConfig({
@@ -36,7 +50,7 @@ export const wagmiConfig = getDefaultConfig({
         enable: false, // Disable if no clientId
       },
 
-  // Disable Coinbase Wallet (not needed for Ronin)
+  // Coinbase Wallet (not needed for Ronin)
   coinbaseWalletConfig: {
     enable: false,
   },
@@ -44,6 +58,9 @@ export const wagmiConfig = getDefaultConfig({
   // Enable multi-injected provider discovery (EIP-6963)
   multiInjectedProviderDiscovery: true,
 
-  // Disable SSR completely - no storage on server
+  // Use safe storage that works in SSR
+  storage: safeStorage,
+  
+  // Disable SSR completely
   ssr: false,
 });
