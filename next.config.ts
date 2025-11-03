@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
   // Force dynamic rendering - no static generation
   output: 'standalone',
 
+  // Enable instrumentation for polyfills
+  experimental: {
+    instrumentationHook: true,
+    isrMemoryCacheSize: 0,
+  },
+
   // Disable image optimization
   images: {
     unoptimized: true,
@@ -19,12 +25,6 @@ const nextConfig: NextConfig = {
   // Disable TypeScript errors during build
   typescript: {
     ignoreBuildErrors: true,
-  },
-
-  // Experimental features to prevent static generation
-  experimental: {
-    // Disable static generation for app router
-    isrMemoryCacheSize: 0,
   },
 
   // Webpack config
