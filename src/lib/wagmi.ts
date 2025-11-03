@@ -4,15 +4,18 @@ import { createStorage, noopStorage } from 'wagmi';
 import './polyfills'; // Import polyfills for SSR
 
 // Create safe storage that works in SSR
-const safeStorage = typeof window !== 'undefined' 
-  ? createStorage({ 
-      storage: typeof window.localStorage !== 'undefined' 
-        ? window.localStorage 
-        : {
+const safeStorage = typeof window !== 'undefined'
+  ? createStorage({
+      storage: typeof window.localStorage !== 'undefined'
+        ? window.localStorage
+        : ({
             getItem: () => null,
             setItem: () => {},
             removeItem: () => {},
-          } as any,
+            clear: () => {},
+            length: 0,
+            key: () => null,
+          } as Storage),
     })
   : noopStorage;
 
@@ -60,7 +63,7 @@ export const wagmiConfig = getDefaultConfig({
 
   // Use safe storage that works in SSR
   storage: safeStorage,
-  
+
   // Disable SSR completely
   ssr: false,
 });
