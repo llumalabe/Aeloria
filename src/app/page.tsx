@@ -1,14 +1,12 @@
-﻿'use client';
+'use client';
 
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { useWallet } from '@/hooks/useWallet';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const { address } = useWallet();
 
   // Prevent SSR hydration mismatch
   useEffect(() => {
@@ -167,11 +165,7 @@ export default function Home() {
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
             Connect your Ronin Wallet and start your journey as a Guardian of the Eternal Sigils today!
           </p>
-          {mounted && !address && (
-            <p className="text-purple-300 mb-8 text-lg">
-              Click the <span className="font-bold text-yellow-400">Login</span> button in the header to connect your wallet
-            </p>
-          )}
+          /* Wallet prompt removed - use Login button in header */
         </div>
       </section>
     </div>
