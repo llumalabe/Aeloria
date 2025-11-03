@@ -1,4 +1,4 @@
-﻿import type { NextConfig } from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   // Enable instrumentation for polyfills
   experimental: {
     instrumentationHook: true,
-    isrMemoryCacheSize: 0,
+    isrMemoryCacheSize: 0, // Force rebuild
   },
 
   // Disable image optimization
