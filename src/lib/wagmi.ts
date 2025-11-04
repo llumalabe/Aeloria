@@ -1,7 +1,11 @@
 ﻿import { getDefaultConfig } from '@sky-mavis/tanto-widget';
 import { ronin, saigon } from 'viem/chains';
 import { createStorage, noopStorage } from 'wagmi';
+import type { Chain } from 'viem';
 import './polyfills'; // Import polyfills for SSR
+
+// Ensure chains are properly defined - use type assertion for safety
+const supportedChains: readonly [Chain, ...Chain[]] = [ronin, saigon] as const;
 
 // Create safe storage that works in SSR
 const safeStorage = typeof window !== 'undefined'
@@ -30,7 +34,7 @@ export const wagmiConfig = getDefaultConfig({
   },
 
   // Supported chains: Ronin Mainnet (2020) and Saigon Testnet (2021)
-  chains: [ronin, saigon], // Mainnet first for default connection
+  chains: supportedChains,
 
   // WalletConnect configuration
   walletConnectConfig: {

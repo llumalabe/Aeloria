@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TantoProvider } from '@sky-mavis/tanto-widget';
 import { wagmiConfig } from '@/lib/wagmi';
 import Footer from './Footer';
+import { ErrorBoundary } from './ErrorBoundary';
 
 // Lazy load components to prevent SSR issues
 const Sidebar = dynamic(() => import('./Sidebar'), { ssr: false });
@@ -48,19 +49,20 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <TantoProvider
-          theme="dark"
-          config={{
-            initialChainId: 2021, // Saigon Testnet
-            hideConnectSuccessPrompt: false, // Show success animation
-            disableProfile: false, // Show profile modal
-          }}
-        >
-          <div className="min-h-screen bg-black text-white">
-            <WalletReconnect />
-            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+    <ErrorBoundary>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <TantoProvider
+            theme="dark"
+            config={{
+              initialChainId: 2021, // Saigon Testnet
+              hideConnectSuccessPrompt: false, // Show success animation
+              disableProfile: false, // Show profile modal
+            }}
+          >
+            <div className="min-h-screen bg-black text-white">
+              <WalletReconnect />
+              <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
             {/* Hamburger for Mobile */}
             <button
@@ -86,5 +88,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         </TantoProvider>
       </QueryClientProvider>
     </WagmiProvider>
+    </ErrorBoundary>
   );
 }
