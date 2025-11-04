@@ -10,10 +10,43 @@ at a (/var/task/.next/server/chunks/8000.js:11:31441)
 ## Root Cause
 - Wagmi/Viem libraries try to use `indexedDB` during server-side rendering
 - IndexedDB is only available in browsers, not on Node.js server
-- The code calls `.open()` on `indexedDB` which is `null` in SSR environment
+- **CRITICAL**: The code calls `.open()` on `indexedDB` which was set to `null` in `polyfills.ts`
+- **ERROR**: `Cannot read properties of null (reading 'open')` - null has no `.open()` method!
+
+## Critical Discovery
+The `src/lib/polyfills.ts` file had:
+```typescript
+// ❌ WRONG - causes error!
+globalThis.indexedDB = null;
+```
+
+This caused the error because Wagmi tried to call `null.open()`. **You cannot call methods on null!**
 
 ## Solution Implemented
-Created `instrumentation.js` at project root with global polyfills:
+
+### 1. Fixed `src/lib/polyfills.ts` (CRITICAL)
+**Before (BROKEN):**
+```typescript
+globalThis.indexedDB = null; // ❌ Causes "Cannot read properties of null (reading 'open')"
+```
+
+**After (FIXED):**
+```typescript
+globalThis.indexedDB = {
+  open: () => ({
+    result: null,
+    error: null,
+    onsuccess: null,
+    onerror: null,
+    onupgradeneeded: null,
+  }),
+  deleteDatabase: () => ({}),
+  databases: () => Promise.resolve([]),
+  cmp: () => 0,
+}; // ✅ Mock object with .open() method
+```
+
+### 2. Created `instrumentation.js` (Backup Layer)
 
 ```javascript
 export async function register() {
@@ -65,17 +98,27 @@ After deployment:
 - ✅ No SSR/hydration mismatches
 
 ## Files Modified
-- ✅ `instrumentation.js` (NEW) - Global polyfills
+- ✅ `src/lib/polyfills.ts` (CRITICAL FIX) - Changed from `null` to mock object
+- ✅ `instrumentation.js` (NEW) - Global polyfills backup layer
 - ✅ `src/lib/wagmi.ts` - Safe storage configuration
-- ✅ `src/lib/polyfills.ts` - Additional polyfill layer
 - ✅ `src/components/ClientLayout.tsx` - Mounted check
 - ✅ `src/hooks/useWallet.ts` - Safe defaults
 
+## Key Lesson
+**Never set indexedDB to null!** Always create a mock object with the methods that will be called (`open()`, `deleteDatabase()`, etc.).
+
 ## Deployment Status
-- Commit: `6228d2c3`
+- Commit: `4bc6cef3` (CRITICAL FIX)
+- Previous commits: `0514363b`, `6228d2c3`
 - Status: ✅ Pushed to GitHub
 - Vercel: Auto-deploy triggered
 - Expected: Build successful with no SSR errors
+
+## Timeline
+1. **Initial attempt**: Created `instrumentation.js` - didn't work because `polyfills.ts` was loaded first
+2. **Discovery**: Found `polyfills.ts` had `indexedDB = null` (WRONG!)
+3. **Fix**: Changed to mock object with `.open()` method (CORRECT!)
+4. **Result**: Should now work on Vercel
 
 ## Monitoring
 Check Vercel deployment logs for:
