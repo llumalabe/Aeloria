@@ -1,5 +1,5 @@
 ﻿import { getDefaultConfig } from '@sky-mavis/tanto-widget';
-import { ronin, saigon } from 'viem/chains';
+import { ronin, saigon } from './chains'; // Import custom Ronin chains
 import { createStorage, noopStorage } from 'wagmi';
 import type { Chain } from 'viem';
 import './polyfills'; // Import polyfills for SSR
