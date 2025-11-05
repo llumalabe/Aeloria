@@ -48,9 +48,18 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-center mb-6 text-yellow-400">
                 Connect Your Wallet
               </h2>
+              
+              {isMobile && (
+                <div className="mb-6 p-4 bg-blue-900/30 border border-blue-500/50 rounded-lg">
+                  <p className="text-blue-300 text-sm text-center">
+                    💡 <strong>Tip:</strong> If you're in Ronin Wallet app, just tap the Connect button below!
+                  </p>
+                </div>
+              )}
+
               <p className="text-gray-300 text-center mb-8">
                 {isMobile 
-                  ? 'Open this site in Ronin Wallet mobile app to connect'
+                  ? 'Tap the button below to connect your wallet'
                   : 'Connect your Ronin Wallet to start your adventure in Aeloria'
                 }
               </p>
@@ -60,7 +69,7 @@ export default function Home() {
                 disabled={isConnecting}
                 className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold text-xl rounded-lg transition-all duration-200 shadow-lg hover:shadow-purple-500/50"
               >
-                {isConnecting ? 'Connecting...' : isMobile ? 'Open Ronin Wallet App' : 'Connect Ronin Wallet'}
+                {isConnecting ? 'Connecting...' : 'Connect Ronin Wallet'}
               </button>
 
               {error && (

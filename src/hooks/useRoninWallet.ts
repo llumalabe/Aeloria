@@ -84,11 +84,15 @@ export function useRoninWallet() {
     // Check immediately
     checkProvider();
 
-    // Also check after a delay (in case wallet extension loads slowly)
-    const timer = setTimeout(checkProvider, 1000);
+    // Also check after delays (in case wallet extension loads slowly)
+    const timer1 = setTimeout(checkProvider, 500);
+    const timer2 = setTimeout(checkProvider, 1000);
+    const timer3 = setTimeout(checkProvider, 2000);
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
       // Cleanup event listeners
       const provider = getProvider();
       if (provider?.removeListener) {
@@ -164,27 +168,17 @@ export function useRoninWallet() {
   };
 
   const connect = async () => {
-    // If on mobile and no provider, open Ronin Wallet app via deep link
-    if (isMobile() && !getProvider()) {
-      const currentUrl = window.location.href;
-      const dappUrl = encodeURIComponent(currentUrl);
-      
-      // Try to open Ronin Wallet mobile app
-      const roninDeepLink = `roninwallet://dapp?url=${dappUrl}`;
-      window.location.href = roninDeepLink;
-      
-      // Fallback: redirect to Ronin Wallet website after 2 seconds
-      setTimeout(() => {
-        setWallet(prev => ({
-          ...prev,
-          error: 'Please open this site in Ronin Wallet mobile app browser',
-        }));
-      }, 2000);
-      
+    const provider = getProvider();
+    
+    // If on mobile and no provider, show error (don't redirect, user is likely already in the app)
+    if (isMobile() && !provider) {
+      setWallet(prev => ({
+        ...prev,
+        error: 'Please make sure you opened this site from Ronin Wallet app browser',
+      }));
       return;
     }
 
-    const provider = getProvider();
     if (!provider) {
       setWallet(prev => ({
         ...prev,
