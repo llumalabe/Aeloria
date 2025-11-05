@@ -1,6 +1,7 @@
 'use client';
 
 import { useRoninWallet } from '@/hooks/useRoninWallet';
+import { useEffect, useState } from 'react';
 
 export default function RoninWalletButton() {
   const {
@@ -13,16 +14,38 @@ export default function RoninWalletButton() {
     disconnect,
   } = useRoninWallet();
 
+  const [debugInfo, setDebugInfo] = useState<string>('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const info = {
+        hasRonin: !!window.ronin,
+        hasEthereum: !!window.ethereum,
+        roninRequest: !!(window.ronin as any)?.request,
+        ethereumRequest: !!(window.ethereum as any)?.request,
+        ethereumIsRonin: !!(window.ethereum as any)?.isRonin,
+      };
+      setDebugInfo(JSON.stringify(info, null, 2));
+      console.log('🔍 Wallet Debug Info:', info);
+    }
+  }, []);
+
   if (!isInstalled) {
     return (
-      <a
-        href="https://wallet.roninchain.com/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors"
-      >
-        Install Ronin Wallet
-      </a>
+      <div className="space-y-2">
+        <a
+          href="https://wallet.roninchain.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors text-center"
+        >
+          Install Ronin Wallet
+        </a>
+        <details className="text-xs text-gray-400">
+          <summary className="cursor-pointer">Debug Info</summary>
+          <pre className="mt-2 p-2 bg-gray-800 rounded overflow-auto">{debugInfo}</pre>
+        </details>
+      </div>
     );
   }
 

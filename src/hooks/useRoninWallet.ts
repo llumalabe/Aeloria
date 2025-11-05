@@ -24,6 +24,7 @@ interface WalletState {
   isConnected: boolean;
   isConnecting: boolean;
   error: string | null;
+  isInstalled: boolean;
 }
 
 export function useRoninWallet() {
@@ -33,6 +34,7 @@ export function useRoninWallet() {
     isConnected: false,
     isConnecting: false,
     error: null,
+    isInstalled: false,
   });
 
   // Get the provider (Ronin Wallet or fallback to Ethereum)
@@ -45,17 +47,31 @@ export function useRoninWallet() {
     // Fallback to window.ethereum if it's Ronin
     if (window.ethereum?.isRonin && window.ethereum?.request) return window.ethereum;
     
+    // Also check if window.ethereum exists (might be Ronin but not flagged)
+    if (window.ethereum?.request) return window.ethereum;
+    
     return null;
   };
 
   useEffect(() => {
-    const provider = getProvider();
-    if (provider) {
-      checkConnection();
-      setupEventListeners();
-    }
+    // Check for provider immediately
+    const checkProvider = () => {
+      const provider = getProvider();
+      if (provider) {
+        setWallet(prev => ({ ...prev, isInstalled: true }));
+        checkConnection();
+        setupEventListeners();
+      }
+    };
+
+    // Check immediately
+    checkProvider();
+
+    // Also check after a delay (in case wallet extension loads slowly)
+    const timer = setTimeout(checkProvider, 1000);
 
     return () => {
+      clearTimeout(timer);
       // Cleanup event listeners
       const provider = getProvider();
       if (provider?.removeListener) {
@@ -236,11 +252,15 @@ export function useRoninWallet() {
   };
 
   return {
-    ...wallet,
+    address: wallet.address,
+    chainId: wallet.chainId,
+    isConnected: wallet.isConnected,
+    isConnecting: wallet.isConnecting,
+    error: wallet.error,
+    isInstalled: wallet.isInstalled,
     connect,
     disconnect,
     switchToRonin,
     switchToSaigon,
-    isInstalled: !!getProvider(),
   };
 }
