@@ -2,14 +2,6 @@
 
 import { useState, useEffect } from 'react';
 
-// Waypoint SDK
-let WaypointProvider: any;
-if (typeof window !== 'undefined') {
-  import('@sky-mavis/waypoint').then((module) => {
-    WaypointProvider = module.WaypointProvider;
-  });
-}
-
 interface WalletState {
   address: string | null;
   chainId: string | null;
@@ -28,37 +20,33 @@ export function useWaypoint() {
   });
 
   const [waypointInstance, setWaypointInstance] = useState<any>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
     // Initialize Waypoint
     const initWaypoint = async () => {
-      if (typeof window === 'undefined' || !WaypointProvider) return;
+      if (typeof window === 'undefined') return;
 
       try {
+        setIsInitializing(true);
+        
+        // Dynamically import Waypoint SDK
+        const { WaypointProvider } = await import('@sky-mavis/waypoint');
+        
         const waypoint = await WaypointProvider.create({
           clientId: process.env.NEXT_PUBLIC_WAYPOINT_CLIENT_ID || 'aeloria-game',
           chainId: 2020, // Ronin Mainnet
         });
 
         setWaypointInstance(waypoint);
-
-        // Check if already connected
-        const user = await waypoint.getUser();
-        if (user) {
-          setWallet({
-            address: user.address,
-            chainId: '0x7e4', // Ronin Mainnet
-            isConnected: true,
-            isConnecting: false,
-            error: null,
-          });
-        }
+        setIsInitializing(false);
       } catch (error: any) {
         console.error('Failed to initialize Waypoint:', error);
         setWallet(prev => ({
           ...prev,
           error: error.message || 'Failed to initialize wallet',
         }));
+        setIsInitializing(false);
       }
     };
 
@@ -66,10 +54,19 @@ export function useWaypoint() {
   }, []);
 
   const connect = async () => {
+    // Wait for initialization if still loading
+    if (isInitializing) {
+      setWallet(prev => ({
+        ...prev,
+        error: 'Initializing wallet... Please wait a moment.',
+      }));
+      return;
+    }
+
     if (!waypointInstance) {
       setWallet(prev => ({
         ...prev,
-        error: 'Waypoint not initialized yet. Please wait...',
+        error: 'Waypoint not initialized. Please refresh the page.',
       }));
       return;
     }
@@ -78,10 +75,10 @@ export function useWaypoint() {
       setWallet(prev => ({ ...prev, isConnecting: true, error: null }));
 
       // Authorize and get user info
-      const user = await waypointInstance.authorize();
+      const result = await waypointInstance.authorize();
 
       setWallet({
-        address: user.address,
+        address: result.address || result.userAddress,
         chainId: '0x7e4',
         isConnected: true,
         isConnecting: false,
@@ -124,6 +121,7 @@ export function useWaypoint() {
     if (!waypointInstance) return;
 
     try {
+      const { WaypointProvider } = await import('@sky-mavis/waypoint');
       const waypoint = await WaypointProvider.create({
         clientId: process.env.NEXT_PUBLIC_WAYPOINT_CLIENT_ID || 'aeloria-game',
         chainId: 2021, // Saigon Testnet
