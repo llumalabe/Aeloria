@@ -172,12 +172,13 @@ export function useRoninWallet() {
     
     // If on mobile and no provider, try to open Ronin Wallet app with deep link
     if (isMobile() && !provider) {
-      const currentUrl = encodeURIComponent(window.location.href);
+      const currentUrl = window.location.href;
       
-      // Ronin Wallet deep link scheme
-      const deepLink = `https://wallet.roninchain.com/browser?url=${currentUrl}`;
+      // Ronin Wallet app URL scheme for opening browser with specific URL
+      // Format: roninwallet://browser?url=<encoded_url>
+      const deepLink = `roninwallet://browser?url=${encodeURIComponent(currentUrl)}`;
       
-      // Try to open the app
+      // Try to open the app with custom URL scheme
       window.location.href = deepLink;
       
       // Show message
@@ -185,6 +186,16 @@ export function useRoninWallet() {
         ...prev,
         error: 'Opening Ronin Wallet app... If nothing happens, please install the app first.',
       }));
+      
+      // Fallback: if app doesn't open within 2 seconds, show install links
+      setTimeout(() => {
+        if (!getProvider()) {
+          setWallet(prev => ({
+            ...prev,
+            error: 'Ronin Wallet app not found. Please install it first.',
+          }));
+        }
+      }, 2000);
       
       return;
     }
