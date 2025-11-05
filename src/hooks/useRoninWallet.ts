@@ -41,53 +41,21 @@ export function useRoninWallet() {
   const getProvider = (): EthereumProvider | null => {
     if (typeof window === 'undefined') return null;
     
-    // Detailed logging to understand the structure
-    if (window.ronin) {
-      console.log('🔍 window.ronin exists! Inspecting structure:');
-      console.log('  - Type:', typeof window.ronin);
-      console.log('  - Constructor:', (window.ronin as any).constructor?.name);
-      console.log('  - Keys:', Object.keys(window.ronin));
-      console.log('  - request method:', typeof (window.ronin as any).request);
-      console.log('  - Full object:', window.ronin);
-      
-      // Check if it's a provider getter
-      if (typeof window.ronin === 'function') {
-        console.log('  - window.ronin is a function, trying to call it...');
-        try {
-          const provider = (window.ronin as any)();
-          console.log('  - Returned provider:', provider);
-          if (provider?.request) {
-            console.log('✅ Got provider from window.ronin() function');
-            return provider;
-          }
-        } catch (e) {
-          console.log('  - Error calling window.ronin():', e);
-        }
-      }
-      
-      // Check if it has a provider property
-      if ((window.ronin as any).provider) {
-        console.log('  - Found window.ronin.provider:', (window.ronin as any).provider);
-        if ((window.ronin as any).provider.request) {
-          console.log('✅ Using window.ronin.provider');
-          return (window.ronin as any).provider;
-        }
-      }
+    // Check if window.ronin has a provider property (Ronin Wallet Chrome Extension structure)
+    if ((window.ronin as any)?.provider?.request) {
+      return (window.ronin as any).provider;
     }
     
-    // Try window.ronin.request directly
+    // Fallback to window.ronin direct (older versions)
     if (window.ronin?.request) {
-      console.log('✅ Using window.ronin directly');
       return window.ronin;
     }
     
-    // Try window.ethereum
+    // Fallback to window.ethereum
     if (window.ethereum?.request) {
-      console.log('✅ Using window.ethereum');
       return window.ethereum;
     }
     
-    console.log('❌ No wallet provider found');
     return null;
   };
 
