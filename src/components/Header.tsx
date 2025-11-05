@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useWallet } from '@/hooks/useWallet';
-import { TantoConnectButton } from '@sky-mavis/tanto-widget';
+import { WalletConnectButton } from './WalletConnectButton';
 import { useState, useEffect } from 'react';
 
 interface HeaderProps {
@@ -107,9 +107,9 @@ export default function Header({ sidebarOpen, setSidebarOpen }: HeaderProps) {
                   )}
                 </div>
               ) : (
-                /* Tanto Connect Wallet Button */
+                /* Wallet Connect Button */
                 <div className="flex items-center">
-                  <TantoConnectButton />
+                  <WalletConnectButton />
                 </div>
               )}
             </div>

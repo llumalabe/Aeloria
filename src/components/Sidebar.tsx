@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@/hooks/useWallet';
-import { TantoConnectButton } from '@sky-mavis/tanto-widget';
+import { WalletConnectButton } from './WalletConnectButton';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -106,23 +106,9 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 </button>
               </>
             ) : (
-              /* Not Logged In: Show Tanto Connect Button */
+              /* Not Logged In: Show Wallet Connect Button */
               <div className="w-full">
-                <TantoConnectButton>
-                  {({ isConnected, showModal }) =>
-                    !isConnected ? (
-                      <button
-                        onClick={() => {
-                          showModal();
-                          setIsOpen(false);
-                        }}
-                        className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105"
-                      >
-                        🔗 Connect Wallet
-                      </button>
-                    ) : null
-                  }
-                </TantoConnectButton>
+                <WalletConnectButton />
               </div>
             )}
           </div>

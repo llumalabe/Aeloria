@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/hooks/useWallet';
-import { TantoConnectButton } from '@sky-mavis/tanto-widget';
+import Link from 'next/link';
+import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { useEffect } from 'react';
 
 export default function Home() {
@@ -28,7 +29,7 @@ export default function Home() {
               <p className="text-sm text-amber-200">Guardians of the Eternal Sigils</p>
             </div>
             <div className="flex items-center">
-              <TantoConnectButton />
+              <WalletConnectButton />
             </div>
           </div>
         </div>
@@ -47,7 +48,7 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <div className="flex items-center">
-              <TantoConnectButton />
+              <WalletConnectButton />
             </div>
             <button
               onClick={() => window.open('https://docs.roninchain.com', '_blank')}
@@ -125,7 +126,7 @@ export default function Home() {
             Connect your Ronin Wallet and start your adventure in Aeloria today!
           </p>
           <div className="flex justify-center">
-            <TantoConnectButton />
+            <WalletConnectButton />
           </div>
         </div>
       </section>
