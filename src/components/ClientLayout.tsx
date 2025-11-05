@@ -16,6 +16,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [hasWagmiError, setHasWagmiError] = useState(false);
+  const [wagmiReady, setWagmiReady] = useState(false);
   
   // Create QueryClient inside component to prevent SSR issues
   const [queryClient] = useState(() => new QueryClient({
@@ -34,10 +35,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   // Only render after client-side hydration
   useEffect(() => {
     setMounted(true);
+    // Give Wagmi time to initialize
+    setTimeout(() => {
+      setWagmiReady(true);
+    }, 100);
   }, []);
 
-  // Don't render Web3 providers until mounted (client-side only)
-  if (!mounted) {
+  // Don't render Web3 providers until mounted AND wagmiReady
+  if (!mounted || !wagmiReady) {
     return (
       <div className="min-h-screen bg-black text-white">
         <main className="flex-grow pb-16">
@@ -65,6 +70,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   // Validate wagmiConfig before rendering providers
   if (!wagmiConfig || !wagmiConfig.chains || wagmiConfig.chains.length === 0) {
+    console.error('Invalid wagmiConfig - no chains:', wagmiConfig);
+    setHasWagmiError(true);
+  }
+
+  // Also check if connectors exist
+  if (wagmiConfig && (!wagmiConfig.connectors || wagmiConfig.connectors.length === 0)) {
+    console.error('Invalid wagmiConfig - no connectors:', wagmiConfig);
+    setHasWagmiError(true);
+  }
+
+  if (!wagmiConfig) {
     console.error('Invalid wagmiConfig:', wagmiConfig);
     return (
       <div style={{

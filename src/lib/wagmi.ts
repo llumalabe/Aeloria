@@ -11,12 +11,15 @@ const safeStorage = typeof window !== 'undefined'
     })
   : noopStorage;
 
+// Create connectors explicitly
+const roninInjected = injected({ 
+  shimDisconnect: true,
+});
+
 // Wagmi Configuration for Aeloria - Simple config with only injected connector
 export const wagmiConfig = createConfig({
   chains: [saigon, ronin], // Saigon first for testing
-  connectors: [
-    injected({ shimDisconnect: true }),
-  ],
+  connectors: [roninInjected],
   transports: {
     [saigon.id]: http('https://saigon-testnet.roninchain.com/rpc'),
     [ronin.id]: http('https://api.roninchain.com/rpc'),
