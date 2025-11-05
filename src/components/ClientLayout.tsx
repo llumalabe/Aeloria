@@ -6,6 +6,7 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { wagmiConfig } from '@/lib/wagmi';
 import Footer from './Footer';
+import { WagmiErrorBoundary } from './WagmiErrorBoundary';
 
 // Lazy load components to prevent SSR issues
 const Sidebar = dynamic(() => import('./Sidebar'), { ssr: false });
@@ -14,6 +15,7 @@ const WalletReconnect = dynamic(() => import('./WalletReconnect'), { ssr: false 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [hasWagmiError, setHasWagmiError] = useState(false);
   
   // Create QueryClient inside component to prevent SSR issues
   const [queryClient] = useState(() => new QueryClient({
@@ -38,6 +40,21 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   if (!mounted) {
     return (
       <div className="min-h-screen bg-black text-white">
+        <main className="flex-grow pb-16">
+          {children}
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // If Wagmi has error, render without Web3 features
+  if (hasWagmiError) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="p-4 bg-yellow-900/50 text-yellow-200 text-center">
+          ⚠️ Web3 features are temporarily unavailable. You can still browse the game.
+        </div>
         <main className="flex-grow pb-16">
           {children}
         </main>
@@ -108,11 +125,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <div className="min-h-screen bg-black text-white">
-          <WalletReconnect />
-          <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+    <WagmiErrorBoundary onError={() => setHasWagmiError(true)}>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          <div className="min-h-screen bg-black text-white">
+            <WalletReconnect />
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
             {/* Hamburger for Mobile */}
             <button
@@ -137,5 +155,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
         </QueryClientProvider>
       </WagmiProvider>
+    </WagmiErrorBoundary>
   );
 }
