@@ -26,10 +26,9 @@ console.log('โœ… Chains validated successfully');
 // Wagmi Configuration for Aeloria - Simple config with only injected connector
 console.log('๐Ÿ"ง Creating Wagmi config...');
 
-// CRITICAL: Use function form to ensure proper initialization
 export const wagmiConfig = createConfig({
   chains: [saigon, ronin], // Saigon first for testing
-  connectors: () => [
+  connectors: [
     injected({ shimDisconnect: true }),
   ],
   transports: {
@@ -38,7 +37,7 @@ export const wagmiConfig = createConfig({
   },
   storage: safeStorage,
   ssr: false,
-  multiInjectedProviderDiscovery: false, // Disable auto-discovery
+  multiInjectedProviderDiscovery: false, // Disable auto-discovery to prevent WalletConnect errors
 });
 
 console.log('๐Ÿ"ง Wagmi config created:', {
