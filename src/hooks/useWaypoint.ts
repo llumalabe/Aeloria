@@ -34,7 +34,7 @@ export function useWaypoint() {
         const { WaypointProvider } = await import('@sky-mavis/waypoint');
         
         const waypoint = await WaypointProvider.create({
-          clientId: process.env.NEXT_PUBLIC_WAYPOINT_CLIENT_ID || 'aeloria-game',
+          clientId: 'FWH2ducl0Ur5fFSAOeNdXS0p8LmWGD6j',
           chainId: 2020, // Ronin Mainnet
         });
 
@@ -130,7 +130,7 @@ export function useWaypoint() {
     try {
       const { WaypointProvider } = await import('@sky-mavis/waypoint');
       const waypoint = await WaypointProvider.create({
-        clientId: process.env.NEXT_PUBLIC_WAYPOINT_CLIENT_ID || 'aeloria-game',
+        clientId: 'FWH2ducl0Ur5fFSAOeNdXS0p8LmWGD6j',
         chainId: 2021, // Saigon Testnet
       });
       setWaypointInstance(waypoint);
