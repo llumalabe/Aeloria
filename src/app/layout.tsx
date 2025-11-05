@@ -1,7 +1,7 @@
 ﻿import type { Metadata } from "next";
 import { Inter, Cinzel } from "next/font/google";
 import "./globals.css";
-import ClientLayout from "@/components/ClientLayout";
+import ClientLayout from "@/components/ClientLayout.minimal";
 
 const inter = Inter({
   variable: "--font-inter",
