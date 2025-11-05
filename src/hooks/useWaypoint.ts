@@ -74,16 +74,23 @@ export function useWaypoint() {
     try {
       setWallet(prev => ({ ...prev, isConnecting: true, error: null }));
 
-      // Authorize and get user info
-      const result = await waypointInstance.authorize();
-
-      setWallet({
-        address: result.address || result.userAddress,
-        chainId: '0x7e4',
-        isConnected: true,
-        isConnecting: false,
-        error: null,
-      });
+      // Send authorization request - this opens popup/redirect
+      await waypointInstance.requestAuthorization();
+      
+      // Get authorized account info
+      const accounts = await waypointInstance.getAccounts();
+      
+      if (accounts && accounts.length > 0) {
+        setWallet({
+          address: accounts[0],
+          chainId: '0x7e4',
+          isConnected: true,
+          isConnecting: false,
+          error: null,
+        });
+      } else {
+        throw new Error('No accounts found after authorization');
+      }
     } catch (error: any) {
       console.error('Failed to connect:', error);
       setWallet(prev => ({
