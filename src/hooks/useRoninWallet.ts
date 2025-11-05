@@ -25,6 +25,7 @@ interface WalletState {
   isConnecting: boolean;
   error: string | null;
   isInstalled: boolean;
+  isMobile: boolean;
 }
 
 export function useRoninWallet() {
@@ -35,7 +36,14 @@ export function useRoninWallet() {
     isConnecting: false,
     error: null,
     isInstalled: false,
+    isMobile: false,
   });
+
+  // Detect if user is on mobile
+  const isMobile = () => {
+    if (typeof window === 'undefined') return false;
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
 
   // Get the provider (Ronin Wallet or fallback to Ethereum)
   const getProvider = (): EthereumProvider | null => {
@@ -60,6 +68,9 @@ export function useRoninWallet() {
   };
 
   useEffect(() => {
+    // Set mobile detection
+    setWallet(prev => ({ ...prev, isMobile: isMobile() }));
+
     // Check for provider immediately
     const checkProvider = () => {
       const provider = getProvider();
@@ -153,6 +164,26 @@ export function useRoninWallet() {
   };
 
   const connect = async () => {
+    // If on mobile and no provider, open Ronin Wallet app via deep link
+    if (isMobile() && !getProvider()) {
+      const currentUrl = window.location.href;
+      const dappUrl = encodeURIComponent(currentUrl);
+      
+      // Try to open Ronin Wallet mobile app
+      const roninDeepLink = `roninwallet://dapp?url=${dappUrl}`;
+      window.location.href = roninDeepLink;
+      
+      // Fallback: redirect to Ronin Wallet website after 2 seconds
+      setTimeout(() => {
+        setWallet(prev => ({
+          ...prev,
+          error: 'Please open this site in Ronin Wallet mobile app browser',
+        }));
+      }, 2000);
+      
+      return;
+    }
+
     const provider = getProvider();
     if (!provider) {
       setWallet(prev => ({
@@ -268,6 +299,7 @@ export function useRoninWallet() {
     isConnecting: wallet.isConnecting,
     error: wallet.error,
     isInstalled: wallet.isInstalled,
+    isMobile: wallet.isMobile,
     connect,
     disconnect,
     switchToRonin,

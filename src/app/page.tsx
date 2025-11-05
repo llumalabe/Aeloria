@@ -12,6 +12,7 @@ export default function Home() {
     error,
     connect,
     disconnect,
+    isMobile,
   } = useRoninWallet();
 
   useEffect(() => {
@@ -48,7 +49,10 @@ export default function Home() {
                 Connect Your Wallet
               </h2>
               <p className="text-gray-300 text-center mb-8">
-                Connect your Ronin Wallet to start your adventure in Aeloria
+                {isMobile 
+                  ? 'Open this site in Ronin Wallet mobile app to connect'
+                  : 'Connect your Ronin Wallet to start your adventure in Aeloria'
+                }
               </p>
               
               <button
@@ -56,13 +60,33 @@ export default function Home() {
                 disabled={isConnecting}
                 className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold text-xl rounded-lg transition-all duration-200 shadow-lg hover:shadow-purple-500/50"
               >
-                {isConnecting ? 'Connecting...' : 'Connect Ronin Wallet'}
+                {isConnecting ? 'Connecting...' : isMobile ? 'Open Ronin Wallet App' : 'Connect Ronin Wallet'}
               </button>
 
               {error && (
                 <div className="mt-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
                   <p className="text-red-400 text-sm text-center">{error}</p>
-                  {error.includes('not installed') && (
+                  {error.includes('mobile app') && (
+                    <div className="mt-4 space-y-2">
+                      <a
+                        href="https://play.google.com/store/apps/details?id=com.skymavis.genesis"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-center"
+                      >
+                        📱 Download for Android
+                      </a>
+                      <a
+                        href="https://apps.apple.com/app/ronin-wallet/id1592675001"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-center"
+                      >
+                        🍎 Download for iOS
+                      </a>
+                    </div>
+                  )}
+                  {error.includes('not installed') && !isMobile && (
                     <a
                       href="https://wallet.roninchain.com/"
                       target="_blank"
@@ -77,7 +101,7 @@ export default function Home() {
 
               <div className="mt-8 pt-6 border-t border-purple-500/30">
                 <p className="text-gray-400 text-sm text-center mb-4">
-                  New to Ronin Wallet?
+                  {isMobile ? 'Download Ronin Wallet' : 'New to Ronin Wallet?'}
                 </p>
                 <a
                   href="https://wallet.roninchain.com/"
