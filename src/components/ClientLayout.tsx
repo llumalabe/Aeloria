@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TantoProvider } from '@sky-mavis/tanto-widget';
 import { wagmiConfig } from '@/lib/wagmi';
 import Footer from './Footer';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -76,17 +75,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     <ErrorBoundary>
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
-          <TantoProvider
-            theme="dark"
-            config={{
-              initialChainId: 2021, // Saigon Testnet
-              hideConnectSuccessPrompt: false, // Show success animation
-              disableProfile: false, // Show profile modal
-            }}
-          >
-            <div className="min-h-screen bg-black text-white">
-              <WalletReconnect />
-              <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+          <div className="min-h-screen bg-black text-white">
+            <WalletReconnect />
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
             {/* Hamburger for Mobile */}
             <button
@@ -109,9 +100,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               <Footer />
             </div>
           </div>
-        </TantoProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
     </ErrorBoundary>
   );
 }
