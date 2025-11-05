@@ -1,6 +1,6 @@
 'use client';
 
-import { useRoninWallet } from '@/hooks/useRoninWallet';
+import { useWaypoint } from '@/hooks/useWaypoint';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
@@ -12,8 +12,7 @@ export default function Home() {
     error,
     connect,
     disconnect,
-    isMobile,
-  } = useRoninWallet();
+  } = useWaypoint();
 
   useEffect(() => {
     setMounted(true);
@@ -50,10 +49,7 @@ export default function Home() {
               </h2>
 
               <p className="text-gray-300 text-center mb-8">
-                {isMobile 
-                  ? 'Tap the button below to open Ronin Wallet and connect'
-                  : 'Connect your Ronin Wallet to start your adventure in Aeloria'
-                }
+                Connect your Ronin Wallet to start your adventure in Aeloria
               </p>
               
               <button
@@ -67,45 +63,12 @@ export default function Home() {
               {error && (
                 <div className="mt-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
                   <p className="text-red-400 text-sm text-center whitespace-pre-line">{error}</p>
-                  {error.includes('Opening Ronin Wallet') && (
-                    <div className="mt-4 space-y-2">
-                      <p className="text-gray-300 text-xs text-center">
-                        Don't have Ronin Wallet?
-                      </p>
-                      <a
-                        href="https://play.google.com/store/apps/details?id=com.skymavis.genesis"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-center text-sm"
-                      >
-                        📱 Android
-                      </a>
-                      <a
-                        href="https://apps.apple.com/app/ronin-wallet/id1592675001"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-center text-sm"
-                      >
-                        🍎 iOS
-                      </a>
-                    </div>
-                  )}
-                  {error.includes('not installed') && !isMobile && (
-                    <a
-                      href="https://wallet.roninchain.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block mt-3 text-center text-blue-400 hover:text-blue-300 underline text-sm"
-                    >
-                      Install Ronin Wallet Extension
-                    </a>
-                  )}
                 </div>
               )}
 
               <div className="mt-8 pt-6 border-t border-purple-500/30">
                 <p className="text-gray-400 text-sm text-center mb-4">
-                  {isMobile ? 'Download Ronin Wallet' : 'New to Ronin Wallet?'}
+                  New to Ronin Wallet?
                 </p>
                 <a
                   href="https://wallet.roninchain.com/"
