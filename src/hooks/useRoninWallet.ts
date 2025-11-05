@@ -41,15 +41,29 @@ export function useRoninWallet() {
   const getProvider = (): EthereumProvider | null => {
     if (typeof window === 'undefined') return null;
     
+    // Log what's available for debugging
+    console.log('🔍 Checking wallet providers:', {
+      hasRonin: !!window.ronin,
+      hasEthereum: !!window.ethereum,
+      roninRequest: typeof (window.ronin as any)?.request,
+      ethereumRequest: typeof (window.ethereum as any)?.request,
+      ethereumProviders: window.ethereum ? Object.keys(window.ethereum).filter(k => k.includes('ronin') || k.includes('Ronin')) : [],
+      allEthereumKeys: window.ethereum ? Object.keys(window.ethereum).slice(0, 10) : [],
+    });
+    
     // Try window.ronin first
-    if (window.ronin?.request) return window.ronin;
+    if (window.ronin?.request) {
+      console.log('✅ Using window.ronin');
+      return window.ronin;
+    }
     
-    // Fallback to window.ethereum if it's Ronin
-    if (window.ethereum?.isRonin && window.ethereum?.request) return window.ethereum;
+    // Try window.ethereum (Ronin might inject here)
+    if (window.ethereum?.request) {
+      console.log('✅ Using window.ethereum');
+      return window.ethereum;
+    }
     
-    // Also check if window.ethereum exists (might be Ronin but not flagged)
-    if (window.ethereum?.request) return window.ethereum;
-    
+    console.log('❌ No wallet provider found');
     return null;
   };
 
@@ -95,13 +109,14 @@ export function useRoninWallet() {
       });
 
       if (accounts && accounts.length > 0) {
-        setWallet({
+        setWallet(prev => ({
+          ...prev,
           address: accounts[0],
           chainId,
           isConnected: true,
           isConnecting: false,
           error: null,
-        });
+        }));
       }
     } catch (error) {
       console.error('Error checking connection:', error);
@@ -111,13 +126,14 @@ export function useRoninWallet() {
   const handleAccountsChanged = (accounts: string[]) => {
     if (accounts.length === 0) {
       // Disconnected
-      setWallet({
+      setWallet(prev => ({
+        ...prev,
         address: null,
         chainId: null,
         isConnected: false,
         isConnecting: false,
         error: null,
-      });
+      }));
     } else {
       setWallet(prev => ({
         ...prev,
@@ -165,13 +181,14 @@ export function useRoninWallet() {
         method: 'eth_chainId',
       });
 
-      setWallet({
+      setWallet(prev => ({
+        ...prev,
         address: accounts[0],
         chainId,
         isConnected: true,
         isConnecting: false,
         error: null,
-      });
+      }));
     } catch (error: any) {
       setWallet(prev => ({
         ...prev,
@@ -182,13 +199,14 @@ export function useRoninWallet() {
   };
 
   const disconnect = () => {
-    setWallet({
+    setWallet(prev => ({
+      ...prev,
       address: null,
       chainId: null,
       isConnected: false,
       isConnecting: false,
       error: null,
-    });
+    }));
   };
 
   const switchToRonin = async () => {
