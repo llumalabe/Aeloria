@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from 'react';
 
-// Ronin Wallet types
-interface RoninProvider {
+// Ethereum Provider types (Ronin uses standard EIP-1193)
+interface EthereumProvider {
   request: (args: { method: string; params?: any[] }) => Promise<any>;
-  on: (event: string, callback: (...args: any[]) => void) => void;
-  removeListener: (event: string, callback: (...args: any[]) => void) => void;
+  on?: (event: string, callback: (...args: any[]) => void) => void;
+  removeListener?: (event: string, callback: (...args: any[]) => void) => void;
   isRonin?: boolean;
+  isMetaMask?: boolean;
 }
 
 declare global {
   interface Window {
-    ronin?: RoninProvider;
+    ronin?: EthereumProvider;
+    ethereum?: EthereumProvider;
   }
 }
 
@@ -33,31 +35,46 @@ export function useRoninWallet() {
     error: null,
   });
 
+  // Get the provider (Ronin Wallet or fallback to Ethereum)
+  const getProvider = (): EthereumProvider | null => {
+    if (typeof window === 'undefined') return null;
+    
+    // Try window.ronin first
+    if (window.ronin?.request) return window.ronin;
+    
+    // Fallback to window.ethereum if it's Ronin
+    if (window.ethereum?.isRonin && window.ethereum?.request) return window.ethereum;
+    
+    return null;
+  };
+
   useEffect(() => {
-    // Check if Ronin Wallet is installed
-    if (typeof window !== 'undefined' && window.ronin) {
+    const provider = getProvider();
+    if (provider) {
       checkConnection();
       setupEventListeners();
     }
 
     return () => {
       // Cleanup event listeners
-      if (window.ronin) {
-        window.ronin.removeListener('accountsChanged', handleAccountsChanged);
-        window.ronin.removeListener('chainChanged', handleChainChanged);
+      const provider = getProvider();
+      if (provider?.removeListener) {
+        provider.removeListener('accountsChanged', handleAccountsChanged);
+        provider.removeListener('chainChanged', handleChainChanged);
       }
     };
   }, []);
 
   const checkConnection = async () => {
     try {
-      if (!window.ronin) return;
+      const provider = getProvider();
+      if (!provider) return;
 
-      const accounts = await window.ronin.request({ 
+      const accounts = await provider.request({ 
         method: 'eth_accounts' 
       });
 
-      const chainId = await window.ronin.request({ 
+      const chainId = await provider.request({ 
         method: 'eth_chainId' 
       });
 
@@ -104,14 +121,16 @@ export function useRoninWallet() {
   };
 
   const setupEventListeners = () => {
-    if (!window.ronin) return;
+    const provider = getProvider();
+    if (!provider?.on) return;
 
-    window.ronin.on('accountsChanged', handleAccountsChanged);
-    window.ronin.on('chainChanged', handleChainChanged);
+    provider.on('accountsChanged', handleAccountsChanged);
+    provider.on('chainChanged', handleChainChanged);
   };
 
   const connect = async () => {
-    if (!window.ronin) {
+    const provider = getProvider();
+    if (!provider) {
       setWallet(prev => ({
         ...prev,
         error: 'Ronin Wallet not installed. Please install from https://wallet.roninchain.com/',
@@ -122,11 +141,11 @@ export function useRoninWallet() {
     try {
       setWallet(prev => ({ ...prev, isConnecting: true, error: null }));
 
-      const accounts = await window.ronin.request({
+      const accounts = await provider.request({
         method: 'eth_requestAccounts',
       });
 
-      const chainId = await window.ronin.request({
+      const chainId = await provider.request({
         method: 'eth_chainId',
       });
 
@@ -157,17 +176,18 @@ export function useRoninWallet() {
   };
 
   const switchToRonin = async () => {
-    if (!window.ronin) return;
+    const provider = getProvider();
+    if (!provider) return;
 
     try {
-      await window.ronin.request({
+      await provider.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: '0x7E4' }], // 2020 in hex (Ronin Mainnet)
       });
     } catch (error: any) {
       // If chain doesn't exist, add it
       if (error.code === 4902) {
-        await window.ronin.request({
+        await provider.request({
           method: 'wallet_addEthereumChain',
           params: [{
             chainId: '0x7E4',
@@ -186,17 +206,18 @@ export function useRoninWallet() {
   };
 
   const switchToSaigon = async () => {
-    if (!window.ronin) return;
+    const provider = getProvider();
+    if (!provider) return;
 
     try {
-      await window.ronin.request({
+      await provider.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: '0x7E5' }], // 2021 in hex (Saigon Testnet)
       });
     } catch (error: any) {
       // If chain doesn't exist, add it
       if (error.code === 4902) {
-        await window.ronin.request({
+        await provider.request({
           method: 'wallet_addEthereumChain',
           params: [{
             chainId: '0x7E5',
@@ -220,6 +241,6 @@ export function useRoninWallet() {
     disconnect,
     switchToRonin,
     switchToSaigon,
-    isInstalled: typeof window !== 'undefined' && !!window.ronin,
+    isInstalled: !!getProvider(),
   };
 }
