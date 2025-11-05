@@ -48,18 +48,10 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-center mb-6 text-yellow-400">
                 Connect Your Wallet
               </h2>
-              
-              {isMobile && (
-                <div className="mb-6 p-4 bg-blue-900/30 border border-blue-500/50 rounded-lg">
-                  <p className="text-blue-300 text-sm text-center">
-                    💡 <strong>Tip:</strong> If you're in Ronin Wallet app, just tap the Connect button below!
-                  </p>
-                </div>
-              )}
 
               <p className="text-gray-300 text-center mb-8">
                 {isMobile 
-                  ? 'Tap the button below to connect your wallet'
+                  ? 'Tap the button below to open Ronin Wallet and connect'
                   : 'Connect your Ronin Wallet to start your adventure in Aeloria'
                 }
               </p>
@@ -75,23 +67,26 @@ export default function Home() {
               {error && (
                 <div className="mt-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
                   <p className="text-red-400 text-sm text-center">{error}</p>
-                  {error.includes('mobile app') && (
+                  {error.includes('Opening Ronin Wallet') && (
                     <div className="mt-4 space-y-2">
+                      <p className="text-gray-300 text-xs text-center">
+                        Don't have Ronin Wallet?
+                      </p>
                       <a
                         href="https://play.google.com/store/apps/details?id=com.skymavis.genesis"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-center"
+                        className="block w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-center text-sm"
                       >
-                        📱 Download for Android
+                        📱 Android
                       </a>
                       <a
                         href="https://apps.apple.com/app/ronin-wallet/id1592675001"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-center"
+                        className="block w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-center text-sm"
                       >
-                        🍎 Download for iOS
+                        🍎 iOS
                       </a>
                     </div>
                   )}
@@ -100,7 +95,7 @@ export default function Home() {
                       href="https://wallet.roninchain.com/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block mt-3 text-center text-blue-400 hover:text-blue-300 underline"
+                      className="block mt-3 text-center text-blue-400 hover:text-blue-300 underline text-sm"
                     >
                       Install Ronin Wallet Extension
                     </a>

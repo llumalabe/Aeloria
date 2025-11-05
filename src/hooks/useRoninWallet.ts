@@ -170,12 +170,22 @@ export function useRoninWallet() {
   const connect = async () => {
     const provider = getProvider();
     
-    // If on mobile and no provider, show error (don't redirect, user is likely already in the app)
+    // If on mobile and no provider, try to open Ronin Wallet app with deep link
     if (isMobile() && !provider) {
+      const currentUrl = encodeURIComponent(window.location.href);
+      
+      // Ronin Wallet deep link scheme
+      const deepLink = `https://wallet.roninchain.com/browser?url=${currentUrl}`;
+      
+      // Try to open the app
+      window.location.href = deepLink;
+      
+      // Show message
       setWallet(prev => ({
         ...prev,
-        error: 'Please make sure you opened this site from Ronin Wallet app browser',
+        error: 'Opening Ronin Wallet app... If nothing happens, please install the app first.',
       }));
+      
       return;
     }
 
