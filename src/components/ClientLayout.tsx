@@ -6,7 +6,6 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { wagmiConfig } from '@/lib/wagmi';
 import Footer from './Footer';
-import { ErrorBoundary } from './ErrorBoundary';
 
 // Lazy load components to prevent SSR issues
 const Sidebar = dynamic(() => import('./Sidebar'), { ssr: false });
@@ -109,12 +108,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <ErrorBoundary>
-      <WagmiProvider config={wagmiConfig}>
-        <QueryClientProvider client={queryClient}>
-          <div className="min-h-screen bg-black text-white">
-            <WalletReconnect />
-            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <div className="min-h-screen bg-black text-white">
+          <WalletReconnect />
+          <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
             {/* Hamburger for Mobile */}
             <button
@@ -139,6 +137,5 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
         </QueryClientProvider>
       </WagmiProvider>
-    </ErrorBoundary>
   );
 }

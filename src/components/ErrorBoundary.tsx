@@ -10,24 +10,33 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorCount: number; // Track error count to prevent infinite loops
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorCount: 0 };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('โŒ ErrorBoundary caught an error:');
-    console.error('Error:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('Component stack:', errorInfo.componentStack);
+    // Increment error count
+    this.setState(prev => ({ errorCount: prev.errorCount + 1 }));
+    
+    // Prevent infinite loops - if too many errors, stop logging
+    if (this.state.errorCount < 3) {
+      console.error('โŒ ErrorBoundary caught an error:');
+      console.error('Error:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Component stack:', errorInfo.componentStack);
+    } else {
+      console.error('โŒ Too many errors caught, stopping error logging to prevent infinite loop');
+    }
   }
 
   render() {
