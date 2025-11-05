@@ -1,14 +1,34 @@
 'use client';
 
 import { useConnect, useAccount, useDisconnect } from 'wagmi';
+import { useState, useEffect } from 'react';
 
 export function WalletConnectButton() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Always call hooks (rules of hooks requirement)
   const { address, isConnected } = useAccount();
   const { connect, connectors = [], isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
 
+  // Don't render until client-side to prevent SSR issues
+  if (!mounted) {
+    return (
+      <button
+        disabled
+        className="px-6 py-2 bg-gray-600 border-2 border-gray-500/50 rounded-lg text-white font-bold"
+      >
+        Loading...
+      </button>
+    );
+  }
+
   // Debug: Log connectors
-  if (typeof window !== 'undefined' && connectors.length === 0) {
+  if (connectors.length === 0) {
     console.warn('No connectors available. Wagmi config may not be loaded correctly.');
   }
 
