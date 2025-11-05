@@ -41,23 +41,47 @@ export function useRoninWallet() {
   const getProvider = (): EthereumProvider | null => {
     if (typeof window === 'undefined') return null;
     
-    // Log what's available for debugging
-    console.log('🔍 Checking wallet providers:', {
-      hasRonin: !!window.ronin,
-      hasEthereum: !!window.ethereum,
-      roninRequest: typeof (window.ronin as any)?.request,
-      ethereumRequest: typeof (window.ethereum as any)?.request,
-      ethereumProviders: window.ethereum ? Object.keys(window.ethereum).filter(k => k.includes('ronin') || k.includes('Ronin')) : [],
-      allEthereumKeys: window.ethereum ? Object.keys(window.ethereum).slice(0, 10) : [],
-    });
+    // Detailed logging to understand the structure
+    if (window.ronin) {
+      console.log('🔍 window.ronin exists! Inspecting structure:');
+      console.log('  - Type:', typeof window.ronin);
+      console.log('  - Constructor:', (window.ronin as any).constructor?.name);
+      console.log('  - Keys:', Object.keys(window.ronin));
+      console.log('  - request method:', typeof (window.ronin as any).request);
+      console.log('  - Full object:', window.ronin);
+      
+      // Check if it's a provider getter
+      if (typeof window.ronin === 'function') {
+        console.log('  - window.ronin is a function, trying to call it...');
+        try {
+          const provider = (window.ronin as any)();
+          console.log('  - Returned provider:', provider);
+          if (provider?.request) {
+            console.log('✅ Got provider from window.ronin() function');
+            return provider;
+          }
+        } catch (e) {
+          console.log('  - Error calling window.ronin():', e);
+        }
+      }
+      
+      // Check if it has a provider property
+      if ((window.ronin as any).provider) {
+        console.log('  - Found window.ronin.provider:', (window.ronin as any).provider);
+        if ((window.ronin as any).provider.request) {
+          console.log('✅ Using window.ronin.provider');
+          return (window.ronin as any).provider;
+        }
+      }
+    }
     
-    // Try window.ronin first
+    // Try window.ronin.request directly
     if (window.ronin?.request) {
-      console.log('✅ Using window.ronin');
+      console.log('✅ Using window.ronin directly');
       return window.ronin;
     }
     
-    // Try window.ethereum (Ronin might inject here)
+    // Try window.ethereum
     if (window.ethereum?.request) {
       console.log('✅ Using window.ethereum');
       return window.ethereum;
