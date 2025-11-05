@@ -1,173 +1,126 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
-import Link from 'next/link';
+import { useRoninWallet } from '@/hooks/useRoninWallet';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const {
+    address,
+    isConnected,
+    isConnecting,
+    error,
+    connect,
+    disconnect,
+  } = useRoninWallet();
 
-  // Prevent SSR hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black flex items-center justify-center">
+        <div className="text-white text-2xl">Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black text-white lg:pl-64">
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="text-center max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black text-white flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full">
+        <div className="text-center mb-12">
           <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 via-purple-400 to-pink-600">
             Aeloria
           </h1>
-          <p className="text-3xl md:text-4xl mb-6 text-purple-200 font-semibold">
-             Guardians of the Eternal Sigils 
+          <p className="text-2xl md:text-3xl mb-4 text-purple-200 font-semibold">
+            Guardians of the Eternal Sigils
           </p>
-          <p className="text-xl md:text-2xl mb-12 text-gray-300 leading-relaxed">
-            Embark on an epic Web3 text-based fantasy RPG adventure on the Ronin Network.
-            Battle monsters, collect NFT heroes, and become a legend!
+          <p className="text-gray-400 text-lg">
+            Web3 Fantasy RPG on Ronin Network
           </p>
         </div>
-      </section>
 
-      {/* Story Section */}
-      <section className="bg-black/50 py-20 border-y border-purple-500/30">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="text-4xl font-bold text-center mb-8 text-yellow-400"> The Legend of Aeloria</h2>
-          <div className="space-y-6 text-gray-300 text-lg leading-relaxed">
-            <p>
-              In the realm of <span className="text-purple-400 font-bold">Aeloria</span>,
-              ancient powers sealed within the <span className="text-yellow-400 font-bold">Eternal Sigils</span> have
-              awakened. These mystical artifacts grant immense power to those worthy enough to wield them.
-            </p>
-            <p>
-              For centuries, the land prospered under the protection of legendary heroes.
-              But darkness has returned. The <span className="text-red-400 font-bold">Shadow Legion</span> rises
-              from the depths, seeking to corrupt the Sigils and plunge the world into eternal night.
-            </p>
-            <p>
-              As a Guardian, you are called upon to master the ancient arts, forge powerful equipment,
-              and gather allies. Only through courage, strategy, and the bonds you create can you
-              prevent the coming apocalypse and restore balance to Aeloria.
-            </p>
-            <p className="text-center text-xl font-bold text-yellow-400 mt-8">
-              Will you rise as a hero, or fall into shadow? The fate of Aeloria is in your hands.
-            </p>
-          </div>
+        <div className="bg-black/40 backdrop-blur-sm border border-purple-500/30 rounded-2xl p-8 shadow-2xl">
+          {!isConnected ? (
+            <div>
+              <h2 className="text-3xl font-bold text-center mb-6 text-yellow-400">
+                Connect Your Wallet
+              </h2>
+              <p className="text-gray-300 text-center mb-8">
+                Connect your Ronin Wallet to start your adventure in Aeloria
+              </p>
+              
+              <button
+                onClick={connect}
+                disabled={isConnecting}
+                className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold text-xl rounded-lg transition-all duration-200 shadow-lg hover:shadow-purple-500/50"
+              >
+                {isConnecting ? 'Connecting...' : 'Connect Ronin Wallet'}
+              </button>
+
+              {error && (
+                <div className="mt-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
+                  <p className="text-red-400 text-sm text-center">{error}</p>
+                  {error.includes('not installed') && (
+                    <a
+                      href="https://wallet.roninchain.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block mt-3 text-center text-blue-400 hover:text-blue-300 underline"
+                    >
+                      Install Ronin Wallet Extension
+                    </a>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-8 pt-6 border-t border-purple-500/30">
+                <p className="text-gray-400 text-sm text-center mb-4">
+                  New to Ronin Wallet?
+                </p>
+                <a
+                  href="https://wallet.roninchain.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-3 px-6 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors text-center"
+                >
+                  Get Ronin Wallet
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-900/50 border border-green-500/50 rounded-full mb-4">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-green-400 text-sm font-medium">Connected</span>
+                </div>
+                <p className="text-2xl font-bold text-white font-mono">
+                  {address?.slice(0, 6)}...{address?.slice(-4)}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <button className="w-full py-4 px-6 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold text-xl rounded-lg transition-all duration-200 shadow-lg hover:shadow-yellow-500/50">
+                  Enter Aeloria
+                </button>
+
+                <button
+                  onClick={disconnect}
+                  className="w-full py-3 px-6 bg-gray-800 hover:bg-red-900 text-white font-medium rounded-lg transition-colors"
+                >
+                  Disconnect Wallet
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-      </section>
 
-      {/* Features Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-16 text-yellow-400"> Game Features</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Feature 1 */}
-            <div className="bg-gradient-to-b from-purple-900/50 to-black/50 p-6 rounded-lg border border-purple-500/30 hover:border-yellow-400/50 transition-colors">
-              <div className="text-5xl mb-4"></div>
-              <h3 className="text-2xl font-bold mb-3 text-yellow-400">NFT Heroes</h3>
-              <p className="text-gray-300">
-                Collect unique NFT characters across 6 legendary classes: Warrior, Mage, Archer, Rogue, Cleric, and Paladin.
-                Each with distinct abilities and playstyles.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="bg-gradient-to-b from-purple-900/50 to-black/50 p-6 rounded-lg border border-purple-500/30 hover:border-yellow-400/50 transition-colors">
-              <div className="text-5xl mb-4"></div>
-              <h3 className="text-2xl font-bold mb-3 text-yellow-400">Dungeon Exploration</h3>
-              <p className="text-gray-300">
-                Venture into dangerous dungeons filled with monsters and treasures.
-                Face epic boss battles and earn rare NFT equipment and rewards.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="bg-gradient-to-b from-purple-900/50 to-black/50 p-6 rounded-lg border border-purple-500/30 hover:border-yellow-400/50 transition-colors">
-              <div className="text-5xl mb-4"></div>
-              <h3 className="text-2xl font-bold mb-3 text-yellow-400">PvP Battles</h3>
-              <p className="text-gray-300">
-                Challenge other players in auto-battle PvP combat.
-                Climb the rankings and prove your strength as the ultimate Guardian.
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="bg-gradient-to-b from-purple-900/50 to-black/50 p-6 rounded-lg border border-purple-500/30 hover:border-yellow-400/50 transition-colors">
-              <div className="text-5xl mb-4"></div>
-              <h3 className="text-2xl font-bold mb-3 text-yellow-400">Equipment & Crafting</h3>
-              <p className="text-gray-300">
-                Forge legendary weapons and armor. Enhance your gear from Common to Mythic rarity.
-                Enchant items up to +10 for maximum power.
-              </p>
-            </div>
-
-            {/* Feature 5 */}
-            <div className="bg-gradient-to-b from-purple-900/50 to-black/50 p-6 rounded-lg border border-purple-500/30 hover:border-yellow-400/50 transition-colors">
-              <div className="text-5xl mb-4"></div>
-              <h3 className="text-2xl font-bold mb-3 text-yellow-400">Gacha & Summons</h3>
-              <p className="text-gray-300">
-                Summon powerful heroes and rare items through the gacha system.
-                Utilize different currencies to unlock your perfect team.
-              </p>
-            </div>
-
-            {/* Feature 6 */}
-            <div className="bg-gradient-to-b from-purple-900/50 to-black/50 p-6 rounded-lg border border-purple-500/30 hover:border-yellow-400/50 transition-colors">
-              <div className="text-5xl mb-4"></div>
-              <h3 className="text-2xl font-bold mb-3 text-yellow-400">Guilds & Community</h3>
-              <p className="text-gray-300">
-                Join or create guilds with fellow Guardians. Participate in world boss events,
-                seasonal challenges, and earn exclusive rewards together.
-              </p>
-            </div>
-          </div>
+        <div className="mt-8 text-center text-gray-500 text-sm">
+          <p>Powered by Ronin Network</p>
         </div>
-      </section>
-
-      {/* Economy Section */}
-      <section className="bg-black/50 py-20 border-t border-purple-500/30">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="text-4xl font-bold text-center mb-12 text-yellow-400"> Triple Economy System</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-b from-yellow-900/30 to-black p-6 rounded-lg border border-yellow-500/30 text-center">
-              <div className="text-4xl mb-3"></div>
-              <h3 className="text-xl font-bold mb-2 text-yellow-400">Gold</h3>
-              <p className="text-gray-300 text-sm">
-                In-game currency earned through quests and battles. Used for basic transactions.
-              </p>
-            </div>
-            <div className="bg-gradient-to-b from-purple-900/30 to-black p-6 rounded-lg border border-purple-500/30 text-center">
-              <div className="text-4xl mb-3"></div>
-              <h3 className="text-xl font-bold mb-2 text-purple-400">Premium Currency</h3>
-              <p className="text-gray-300 text-sm">
-                Premium currency for special summons and exclusive items.
-              </p>
-            </div>
-            <div className="bg-gradient-to-b from-pink-900/30 to-black p-6 rounded-lg border border-pink-500/30 text-center">
-              <div className="text-4xl mb-3"></div>
-              <h3 className="text-2xl font-bold mb-2 text-pink-400">AETH Token</h3>
-              <p className="text-gray-300 text-sm">
-                Blockchain token on Ronin Network. Trade on marketplace and earn through gameplay.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-yellow-400">
-            Ready to Begin Your Adventure?
-          </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Connect your Ronin Wallet and start your journey as a Guardian of the Eternal Sigils today!
-          </p>
-          /* Wallet prompt removed - use Login button in header */
-        </div>
-      </section>
+      </div>
     </div>
   );
 }
