@@ -45,6 +45,16 @@ export function useRoninWallet() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   };
 
+  // Check if inside Ronin Wallet app browser
+  const isInRoninApp = () => {
+    if (typeof window === 'undefined') return false;
+    // Ronin Wallet app browser has specific user agent or window.ronin available
+    const userAgent = navigator.userAgent.toLowerCase();
+    return userAgent.includes('roninwallet') || 
+           userAgent.includes('ronin') ||
+           (window.ronin !== undefined);
+  };
+
   // Get the provider (Ronin Wallet or fallback to Ethereum)
   const getProvider = (): EthereumProvider | null => {
     if (typeof window === 'undefined') return null;
@@ -170,32 +180,31 @@ export function useRoninWallet() {
   const connect = async () => {
     const provider = getProvider();
     
-    // If on mobile and no provider, try to open Ronin Wallet app with deep link
+    // If on mobile and no provider, show instruction message
     if (isMobile() && !provider) {
-      const currentUrl = window.location.href;
+      const isInApp = isInRoninApp();
       
-      // Ronin Wallet app URL scheme for opening browser with specific URL
-      // Format: roninwallet://browser?url=<encoded_url>
-      const deepLink = `roninwallet://browser?url=${encodeURIComponent(currentUrl)}`;
-      
-      // Try to open the app with custom URL scheme
-      window.location.href = deepLink;
-      
-      // Show message
-      setWallet(prev => ({
-        ...prev,
-        error: 'Opening Ronin Wallet app... If nothing happens, please install the app first.',
-      }));
-      
-      // Fallback: if app doesn't open within 2 seconds, show install links
-      setTimeout(() => {
-        if (!getProvider()) {
-          setWallet(prev => ({
-            ...prev,
-            error: 'Ronin Wallet app not found. Please install it first.',
-          }));
-        }
-      }, 2000);
+      if (isInApp) {
+        // In Ronin app but provider not ready yet, wait and retry
+        setWallet(prev => ({
+          ...prev,
+          error: 'Waiting for Ronin Wallet to load... Please wait a moment and try again.',
+        }));
+        
+        // Try to detect provider again after a delay
+        setTimeout(() => {
+          const retryProvider = getProvider();
+          if (retryProvider) {
+            connect(); // Retry connection
+          }
+        }, 1500);
+      } else {
+        // Not in Ronin app, show instructions
+        setWallet(prev => ({
+          ...prev,
+          error: 'Please open this website from Ronin Wallet app:\n\n1. Open Ronin Wallet app 📱\n2. Tap "Browser" tab at the bottom 🌐\n3. Enter this URL: ' + window.location.hostname + '\n4. Then tap "Connect Wallet" button',
+        }));
+      }
       
       return;
     }

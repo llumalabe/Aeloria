@@ -66,7 +66,7 @@ export default function Home() {
 
               {error && (
                 <div className="mt-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
-                  <p className="text-red-400 text-sm text-center">{error}</p>
+                  <p className="text-red-400 text-sm text-center whitespace-pre-line">{error}</p>
                   {error.includes('Opening Ronin Wallet') && (
                     <div className="mt-4 space-y-2">
                       <p className="text-gray-300 text-xs text-center">
