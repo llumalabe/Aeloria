@@ -36,36 +36,97 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      // Use inline styles to avoid any potential issues with Tailwind during error state
       return (
-        <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-black flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-black/50 backdrop-blur-sm border-2 border-red-500/50 rounded-lg p-8 text-center">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-red-400 mb-4">
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(to bottom, #581c87, #6b21a8, #000000)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}>
+          <div style={{
+            maxWidth: '28rem',
+            width: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(8px)',
+            border: '2px solid rgba(239, 68, 68, 0.5)',
+            borderRadius: '0.5rem',
+            padding: '2rem',
+            textAlign: 'center',
+            color: '#ffffff'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+            <h1 style={{
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              color: '#f87171',
+              marginBottom: '1rem'
+            }}>
               เกิดข้อผิดพลาด
             </h1>
-            <p className="text-gray-300 mb-6">
+            <p style={{
+              color: '#d1d5db',
+              marginBottom: '1.5rem'
+            }}>
               {this.state.error?.message || 'Something went wrong!'}
             </p>
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <button
                 onClick={() => window.location.reload()}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                style={{
+                  width: '100%',
+                  backgroundColor: '#9333ea',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#9333ea'}
               >
                 รีโหลดหน้า
               </button>
               <button
                 onClick={() => window.location.href = '/town'}
-                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                style={{
+                  width: '100%',
+                  backgroundColor: '#374151',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#374151'}
               >
                 กลับไปที่ Town
               </button>
             </div>
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-6 text-left">
-                <summary className="cursor-pointer text-yellow-400 mb-2">
+              <details style={{ marginTop: '1.5rem', textAlign: 'left' }}>
+                <summary style={{
+                  cursor: 'pointer',
+                  color: '#fbbf24',
+                  marginBottom: '0.5rem'
+                }}>
                   รายละเอียด Error (Dev Mode)
                 </summary>
-                <pre className="text-xs text-red-300 bg-black/50 p-4 rounded overflow-auto max-h-40">
+                <pre style={{
+                  fontSize: '0.75rem',
+                  color: '#fca5a5',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  padding: '1rem',
+                  borderRadius: '0.25rem',
+                  overflow: 'auto',
+                  maxHeight: '10rem'
+                }}>
                   {this.state.error.stack}
                 </pre>
               </details>

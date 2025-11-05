@@ -51,18 +51,55 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   if (!wagmiConfig || !wagmiConfig.chains || wagmiConfig.chains.length === 0) {
     console.error('Invalid wagmiConfig:', wagmiConfig);
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-black flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-black/50 backdrop-blur-sm border-2 border-red-500/50 rounded-lg p-8 text-center">
-          <div className="text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-red-400 mb-4">
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(to bottom, #581c87, #6b21a8, #000000)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        fontFamily: 'system-ui, -apple-system, sans-serif'
+      }}>
+        <div style={{
+          maxWidth: '28rem',
+          width: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(8px)',
+          border: '2px solid rgba(239, 68, 68, 0.5)',
+          borderRadius: '0.5rem',
+          padding: '2rem',
+          textAlign: 'center',
+          color: '#ffffff'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+          <h1 style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: '#f87171',
+            marginBottom: '1rem'
+          }}>
             Configuration Error
           </h1>
-          <p className="text-gray-300 mb-6">
+          <p style={{
+            color: '#d1d5db',
+            marginBottom: '1.5rem'
+          }}>
             Wagmi configuration is invalid. Please check your setup.
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+            style={{
+              width: '100%',
+              backgroundColor: '#9333ea',
+              color: 'white',
+              fontWeight: 'bold',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '0.5rem',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#9333ea'}
           >
             Reload Page
           </button>
