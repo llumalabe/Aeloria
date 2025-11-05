@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useWallet } from '@/hooks/useWallet';
-import { WalletConnectButton } from './WalletConnectButton';
+import RoninWalletButton from './RoninWalletButton';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,10 +12,9 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname();
-  const { address, disconnect } = useWallet();
 
-  // Menu items based on login status
-  const menuItems = address ? [
+  // For now, show all menu items (will be filtered based on wallet connection later)
+  const menuItems = [
     { href: '/', label: 'Home', icon: '🏠' },
     { href: '/town', label: 'Town', icon: '🏰' },
     { href: '/characters', label: 'Inventory', icon: '🎒' },
@@ -25,8 +23,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     { href: '/rewards', label: 'Rewards', icon: '🎁' },
     { href: '/ranking', label: 'Leaderboard', icon: '🏆' },
     { href: '/vip', label: 'VIP', icon: '👑' },
-  ] : [
-    { href: '/', label: 'Home', icon: '🏠' },
   ];
 
   const isActive = (href: string) => {
@@ -86,31 +82,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
           {/* User Info & Actions */}
           <div className="p-4 border-t border-yellow-500/30">
-            {address ? (
-              /* Logged In: Show wallet info + Disconnect */
-              <>
-                <div className="bg-black/30 rounded-lg p-3 mb-3">
-                  <p className="text-xs text-gray-400 mb-1">Connected Wallet</p>
-                  <p className="text-sm text-white font-mono">
-                    {address.slice(0, 6)}...{address.slice(-4)}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    disconnect();
-                    setIsOpen(false);
-                  }}
-                  className="w-full bg-red-600/80 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-all"
-                >
-                  🚪 Disconnect
-                </button>
-              </>
-            ) : (
-              /* Not Logged In: Show Wallet Connect Button */
-              <div className="w-full">
-                <WalletConnectButton />
-              </div>
-            )}
+            <RoninWalletButton />
           </div>
         </div>
       </aside>
