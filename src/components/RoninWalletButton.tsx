@@ -30,25 +30,7 @@ export default function RoninWalletButton() {
     }
   }, []);
 
-  if (!isInstalled) {
-    return (
-      <div className="space-y-2">
-        <a
-          href="https://wallet.roninchain.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors text-center"
-        >
-          Install Ronin Wallet
-        </a>
-        <details className="text-xs text-gray-400">
-          <summary className="cursor-pointer">Debug Info</summary>
-          <pre className="mt-2 p-2 bg-gray-800 rounded overflow-auto">{debugInfo}</pre>
-        </details>
-      </div>
-    );
-  }
-
+  // Show connected state
   if (isConnected && address) {
     return (
       <div className="flex items-center gap-3">
@@ -68,6 +50,8 @@ export default function RoninWalletButton() {
     );
   }
 
+  // Show connect button (regardless of isInstalled check)
+  // The connect function will handle the "not installed" error
   return (
     <div className="space-y-2">
       <button
@@ -80,7 +64,23 @@ export default function RoninWalletButton() {
       {error && (
         <div className="text-sm text-red-400 bg-red-900/20 border border-red-500/50 rounded p-2">
           {error}
+          {error.includes('not installed') && (
+            <a
+              href="https://wallet.roninchain.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-2 text-blue-400 hover:text-blue-300 underline"
+            >
+              Install Ronin Wallet
+            </a>
+          )}
         </div>
+      )}
+      {!isInstalled && !error && (
+        <details className="text-xs text-gray-400">
+          <summary className="cursor-pointer">🔍 Debug Info (Extension detected: {isInstalled ? 'Yes' : 'No'})</summary>
+          <pre className="mt-2 p-2 bg-gray-800 rounded overflow-auto">{debugInfo}</pre>
+        </details>
       )}
     </div>
   );
