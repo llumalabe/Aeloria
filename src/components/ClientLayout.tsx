@@ -35,6 +35,22 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   // Only render after client-side hydration
   useEffect(() => {
     setMounted(true);
+    
+    // Check if Wagmi can be initialized safely
+    try {
+      if (!wagmiConfig || !wagmiConfig.chains || !wagmiConfig.connectors) {
+        console.warn('Wagmi config incomplete, using fallback mode');
+        setHasWagmiError(true);
+        setWagmiReady(true);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking Wagmi config:', error);
+      setHasWagmiError(true);
+      setWagmiReady(true);
+      return;
+    }
+    
     // Give Wagmi time to initialize - increased delay
     setTimeout(() => {
       setWagmiReady(true);
@@ -86,77 +102,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     );
   }
 
-  // Validate wagmiConfig before rendering providers
-  if (!wagmiConfig || !wagmiConfig.chains || wagmiConfig.chains.length === 0) {
-    console.error('Invalid wagmiConfig - no chains:', wagmiConfig);
-    setHasWagmiError(true);
-  }
-
-  // Also check if connectors exist
-  if (wagmiConfig && (!wagmiConfig.connectors || wagmiConfig.connectors.length === 0)) {
-    console.error('Invalid wagmiConfig - no connectors:', wagmiConfig);
-    setHasWagmiError(true);
-  }
-
-  if (!wagmiConfig) {
-    console.error('Invalid wagmiConfig:', wagmiConfig);
-    return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(to bottom, #581c87, #6b21a8, #000000)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
-      }}>
-        <div style={{
-          maxWidth: '28rem',
-          width: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(8px)',
-          border: '2px solid rgba(239, 68, 68, 0.5)',
-          borderRadius: '0.5rem',
-          padding: '2rem',
-          textAlign: 'center',
-          color: '#ffffff'
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
-          <h1 style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            color: '#f87171',
-            marginBottom: '1rem'
-          }}>
-            Configuration Error
-          </h1>
-          <p style={{
-            color: '#d1d5db',
-            marginBottom: '1.5rem'
-          }}>
-            Wagmi configuration is invalid. Please check your setup.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              width: '100%',
-              backgroundColor: '#9333ea',
-              color: 'white',
-              fontWeight: 'bold',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '0.5rem',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#9333ea'}
-          >
-            Reload Page
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Skip validation checks - already done in useEffect
 
   return (
     <WagmiErrorBoundary onError={() => setHasWagmiError(true)}>
