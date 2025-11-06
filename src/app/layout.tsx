@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Cinzel } from "next/font/google";
+import { Web3ModalProvider } from "@/components/Web3ModalProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,7 +29,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${cinzel.variable} font-sans antialiased`}>
-        {children}
+        <Web3ModalProvider>
+          {children}
+        </Web3ModalProvider>
       </body>
     </html>
   );

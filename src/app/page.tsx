@@ -1,18 +1,13 @@
 'use client';
 
-import { useWaypoint } from '@/hooks/useWaypoint';
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const {
-    address,
-    isConnected,
-    isConnecting,
-    error,
-    connect,
-    disconnect,
-  } = useWaypoint();
+  const { address, isConnected } = useAccount();
+  const { connect, connectors, isPending } = useConnect();
+  const { disconnect } = useDisconnect();
 
   useEffect(() => {
     setMounted(true);
@@ -52,19 +47,18 @@ export default function Home() {
                 Connect your Ronin Wallet to start your adventure in Aeloria
               </p>
               
-              <button
-                onClick={connect}
-                disabled={isConnecting}
-                className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold text-xl rounded-lg transition-all duration-200 shadow-lg hover:shadow-purple-500/50"
-              >
-                {isConnecting ? 'Connecting...' : 'Connect Ronin Wallet'}
-              </button>
-
-              {error && (
-                <div className="mt-6 p-4 bg-red-900/30 border border-red-500/50 rounded-lg">
-                  <p className="text-red-400 text-sm text-center whitespace-pre-line">{error}</p>
-                </div>
-              )}
+              <div className="space-y-3">
+                {connectors.map((connector) => (
+                  <button
+                    key={connector.id}
+                    onClick={() => connect({ connector })}
+                    disabled={isPending}
+                    className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold text-xl rounded-lg transition-all duration-200 shadow-lg hover:shadow-purple-500/50"
+                  >
+                    {isPending ? 'Connecting...' : `Connect with ${connector.name}`}
+                  </button>
+                ))}
+              </div>
 
               <div className="mt-8 pt-6 border-t border-purple-500/30">
                 <p className="text-gray-400 text-sm text-center mb-4">
