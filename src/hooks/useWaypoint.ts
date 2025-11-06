@@ -74,22 +74,20 @@ export function useWaypoint() {
     try {
       setWallet(prev => ({ ...prev, isConnecting: true, error: null }));
 
-      // Send authorization request - this opens popup/redirect
-      await waypointInstance.requestAuthorization();
+      // Waypoint SDK v4 uses sendTransaction to trigger authorization
+      // First, we need to get user to authenticate
+      const result = await waypointInstance.login();
       
-      // Get authorized account info
-      const accounts = await waypointInstance.getAccounts();
-      
-      if (accounts && accounts.length > 0) {
+      if (result && result.address) {
         setWallet({
-          address: accounts[0],
+          address: result.address,
           chainId: '0x7e4',
           isConnected: true,
           isConnecting: false,
           error: null,
         });
       } else {
-        throw new Error('No accounts found after authorization');
+        throw new Error('Failed to get user address');
       }
     } catch (error: any) {
       console.error('Failed to connect:', error);
