@@ -10,6 +10,13 @@ interface WalletState {
   error: string | null;
 }
 
+// Extend window to include ronin provider
+declare global {
+  interface Window {
+    ronin?: any;
+  }
+}
+
 export function useWaypoint() {
   const [wallet, setWallet] = useState<WalletState>({
     address: null,
@@ -19,54 +26,47 @@ export function useWaypoint() {
     error: null,
   });
 
-  const [waypointInstance, setWaypointInstance] = useState<any>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
-
   useEffect(() => {
-    // Initialize Waypoint
-    const initWaypoint = async () => {
-      if (typeof window === 'undefined') return;
-
-      try {
-        setIsInitializing(true);
-        
-        // Dynamically import Waypoint SDK
-        const { WaypointProvider } = await import('@sky-mavis/waypoint');
-        
-        const waypoint = await WaypointProvider.create({
-          clientId: 'FWH2ducl0Ur5fFSAOeNdXS0p8LmWGD6j',
-          chainId: 2020, // Ronin Mainnet
-        });
-
-        setWaypointInstance(waypoint);
-        setIsInitializing(false);
-      } catch (error: any) {
-        console.error('Failed to initialize Waypoint:', error);
-        setWallet(prev => ({
-          ...prev,
-          error: error.message || 'Failed to initialize wallet',
-        }));
-        setIsInitializing(false);
-      }
-    };
-
-    initWaypoint();
+    // Check if already connected on mount
+    checkConnection();
   }, []);
 
+  const checkConnection = async () => {
+    if (typeof window === 'undefined' || !window.ronin) return;
+
+    try {
+      const provider = window.ronin.provider;
+      const accounts = await provider.request({ method: 'eth_accounts' });
+      
+      if (accounts && accounts.length > 0) {
+        const chainId = await provider.request({ method: 'eth_chainId' });
+        setWallet({
+          address: accounts[0],
+          chainId,
+          isConnected: true,
+          isConnecting: false,
+          error: null,
+        });
+      }
+    } catch (error) {
+      console.error('Check connection error:', error);
+    }
+  };
+
   const connect = async () => {
-    // Wait for initialization if still loading
-    if (isInitializing) {
+    if (typeof window === 'undefined') {
       setWallet(prev => ({
         ...prev,
-        error: 'Initializing wallet... Please wait a moment.',
+        error: 'Browser environment required',
       }));
       return;
     }
 
-    if (!waypointInstance) {
+    // Check if Ronin Wallet is installed
+    if (!window.ronin) {
       setWallet(prev => ({
         ...prev,
-        error: 'Waypoint not initialized. Please refresh the page.',
+        error: 'Ronin Wallet not found. Please install from wallet.roninchain.com',
       }));
       return;
     }
@@ -74,21 +74,41 @@ export function useWaypoint() {
     try {
       setWallet(prev => ({ ...prev, isConnecting: true, error: null }));
 
-      // Waypoint SDK v4 uses sendTransaction to trigger authorization
-      // First, we need to get user to authenticate
-      const result = await waypointInstance.login();
+      const provider = window.ronin.provider;
       
-      if (result && result.address) {
-        setWallet({
-          address: result.address,
-          chainId: '0x7e4',
-          isConnected: true,
-          isConnecting: false,
-          error: null,
-        });
-      } else {
-        throw new Error('Failed to get user address');
+      // Request accounts
+      const accounts = await provider.request({ 
+        method: 'eth_requestAccounts' 
+      });
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error('No accounts returned from wallet');
       }
+
+      // Get chain ID
+      const chainId = await provider.request({ method: 'eth_chainId' });
+
+      setWallet({
+        address: accounts[0],
+        chainId,
+        isConnected: true,
+        isConnecting: false,
+        error: null,
+      });
+
+      // Setup event listeners
+      provider.on('accountsChanged', (accounts: string[]) => {
+        if (accounts.length === 0) {
+          disconnect();
+        } else {
+          setWallet(prev => ({ ...prev, address: accounts[0] }));
+        }
+      });
+
+      provider.on('chainChanged', (chainId: string) => {
+        setWallet(prev => ({ ...prev, chainId }));
+      });
+
     } catch (error: any) {
       console.error('Failed to connect:', error);
       setWallet(prev => ({
@@ -100,10 +120,9 @@ export function useWaypoint() {
   };
 
   const disconnect = async () => {
-    if (!waypointInstance) return;
+    if (typeof window === 'undefined' || !window.ronin) return;
 
     try {
-      await waypointInstance.logout();
       setWallet({
         address: null,
         chainId: null,
@@ -117,23 +136,30 @@ export function useWaypoint() {
   };
 
   const switchToRonin = async () => {
-    // Waypoint handles chain switching automatically
-    return Promise.resolve();
+    if (typeof window === 'undefined' || !window.ronin) return;
+
+    try {
+      const provider = window.ronin.provider;
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x7e4' }], // Ronin Mainnet
+      });
+    } catch (error: any) {
+      console.error('Failed to switch to Ronin:', error);
+    }
   };
 
   const switchToSaigon = async () => {
-    // Would need to reinitialize Waypoint with different chainId
-    if (!waypointInstance) return;
+    if (typeof window === 'undefined' || !window.ronin) return;
 
     try {
-      const { WaypointProvider } = await import('@sky-mavis/waypoint');
-      const waypoint = await WaypointProvider.create({
-        clientId: 'FWH2ducl0Ur5fFSAOeNdXS0p8LmWGD6j',
-        chainId: 2021, // Saigon Testnet
+      const provider = window.ronin.provider;
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x7e5' }], // Saigon Testnet
       });
-      setWaypointInstance(waypoint);
     } catch (error: any) {
-      console.error('Failed to switch network:', error);
+      console.error('Failed to switch to Saigon:', error);
     }
   };
 
