@@ -17,9 +17,9 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  title: "Aeloria: Guardians of the Eternal Sigils",
-  description: "A Web3 Text-Based Fantasy RPG on Ronin Network",
-};
+  title: 'Dead Zone - Zombie Survival Game',
+  description: 'Web3 Zombie Survival Game on Ronin Network',
+}
 
 export default function RootLayout({
   children,
