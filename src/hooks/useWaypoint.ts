@@ -30,6 +30,7 @@ export function useWaypoint() {
         const provider = WaypointProvider.create({
           clientId: '32fa6abf-1ef8-4b71-8053-817c6120254a',
           chainId: 2020, // Ronin Mainnet
+          redirectUrl: window.location.origin + '/',
         });
 
         setWaypointProvider(provider);
