@@ -1,6 +1,6 @@
 import { http, createConfig } from 'wagmi'
 import { defineChain } from 'viem'
-import { walletConnect, injected } from 'wagmi/connectors'
+import { injected } from 'wagmi/connectors'
 
 // Define Ronin Mainnet
 export const ronin = defineChain({
@@ -29,23 +29,10 @@ export const saigon = defineChain({
   testnet: true,
 })
 
-// WalletConnect Project ID - get from cloud.walletconnect.com
-const projectId = 'FWH2ducl0Ur5fFSAOeNdXS0p8LmWGD6j'
-
 export const config = createConfig({
   chains: [ronin, saigon],
   connectors: [
     injected(), // For Ronin Wallet browser extension
-    walletConnect({ 
-      projectId,
-      metadata: {
-        name: 'Aeloria: Guardians of the Eternal Sigils',
-        description: 'Web3 Fantasy RPG on Ronin Network',
-        url: 'https://aeloria-two.vercel.app',
-        icons: ['https://aeloria-two.vercel.app/logo.png']
-      },
-      showQrModal: true,
-    }),
   ],
   transports: {
     [ronin.id]: http(),
