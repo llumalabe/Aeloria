@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { WaypointProvider } from '@sky-mavis/waypoint';
 
 interface WalletState {
   address: string | null;
@@ -10,14 +11,8 @@ interface WalletState {
   error: string | null;
 }
 
-// Extend window to include ronin provider
-declare global {
-  interface Window {
-    ronin?: any;
-  }
-}
-
 export function useWaypoint() {
+  const [waypointProvider, setWaypointProvider] = useState<WaypointProvider | null>(null);
   const [wallet, setWallet] = useState<WalletState>({
     address: null,
     chainId: null,
@@ -26,47 +21,35 @@ export function useWaypoint() {
     error: null,
   });
 
+  // Initialize Waypoint Provider
   useEffect(() => {
-    // Check if already connected on mount
-    checkConnection();
+    const initProvider = () => {
+      if (typeof window === 'undefined') return;
+
+      try {
+        const provider = WaypointProvider.create({
+          clientId: '32fa6abf-1ef8-4b71-8053-817c6120254a',
+          chainId: 2020, // Ronin Mainnet
+        });
+
+        setWaypointProvider(provider);
+      } catch (error: any) {
+        console.error('Failed to initialize Waypoint:', error);
+        setWallet(prev => ({
+          ...prev,
+          error: error.message || 'Failed to initialize wallet',
+        }));
+      }
+    };
+
+    initProvider();
   }, []);
 
-  const checkConnection = async () => {
-    if (typeof window === 'undefined' || !window.ronin) return;
-
-    try {
-      const provider = window.ronin.provider;
-      const accounts = await provider.request({ method: 'eth_accounts' });
-      
-      if (accounts && accounts.length > 0) {
-        const chainId = await provider.request({ method: 'eth_chainId' });
-        setWallet({
-          address: accounts[0],
-          chainId,
-          isConnected: true,
-          isConnecting: false,
-          error: null,
-        });
-      }
-    } catch (error) {
-      console.error('Check connection error:', error);
-    }
-  };
-
   const connect = async () => {
-    if (typeof window === 'undefined') {
+    if (!waypointProvider) {
       setWallet(prev => ({
         ...prev,
-        error: 'Browser environment required',
-      }));
-      return;
-    }
-
-    // Check if Ronin Wallet is installed
-    if (!window.ronin) {
-      setWallet(prev => ({
-        ...prev,
-        error: 'Ronin Wallet not found. Please install from wallet.roninchain.com',
+        error: 'Waypoint not initialized. Please refresh the page.',
       }));
       return;
     }
@@ -74,41 +57,20 @@ export function useWaypoint() {
     try {
       setWallet(prev => ({ ...prev, isConnecting: true, error: null }));
 
-      const provider = window.ronin.provider;
+      // Connect and get address
+      const result = await waypointProvider.connect();
       
-      // Request accounts
-      const accounts = await provider.request({ 
-        method: 'eth_requestAccounts' 
-      });
-
-      if (!accounts || accounts.length === 0) {
-        throw new Error('No accounts returned from wallet');
+      if (result && result.address) {
+        setWallet({
+          address: result.address,
+          chainId: '0x7e4', // Ronin Mainnet
+          isConnected: true,
+          isConnecting: false,
+          error: null,
+        });
+      } else {
+        throw new Error('No address returned from authorization');
       }
-
-      // Get chain ID
-      const chainId = await provider.request({ method: 'eth_chainId' });
-
-      setWallet({
-        address: accounts[0],
-        chainId,
-        isConnected: true,
-        isConnecting: false,
-        error: null,
-      });
-
-      // Setup event listeners
-      provider.on('accountsChanged', (accounts: string[]) => {
-        if (accounts.length === 0) {
-          disconnect();
-        } else {
-          setWallet(prev => ({ ...prev, address: accounts[0] }));
-        }
-      });
-
-      provider.on('chainChanged', (chainId: string) => {
-        setWallet(prev => ({ ...prev, chainId }));
-      });
-
     } catch (error: any) {
       console.error('Failed to connect:', error);
       setWallet(prev => ({
@@ -119,10 +81,11 @@ export function useWaypoint() {
     }
   };
 
-  const disconnect = async () => {
-    if (typeof window === 'undefined' || !window.ronin) return;
+  const disconnect = () => {
+    if (!waypointProvider) return;
 
     try {
+      waypointProvider.disconnect();
       setWallet({
         address: null,
         chainId: null,
@@ -135,39 +98,13 @@ export function useWaypoint() {
     }
   };
 
-  const switchToRonin = async () => {
-    if (typeof window === 'undefined' || !window.ronin) return;
-
-    try {
-      const provider = window.ronin.provider;
-      await provider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x7e4' }], // Ronin Mainnet
-      });
-    } catch (error: any) {
-      console.error('Failed to switch to Ronin:', error);
-    }
-  };
-
-  const switchToSaigon = async () => {
-    if (typeof window === 'undefined' || !window.ronin) return;
-
-    try {
-      const provider = window.ronin.provider;
-      await provider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x7e5' }], // Saigon Testnet
-      });
-    } catch (error: any) {
-      console.error('Failed to switch to Saigon:', error);
-    }
-  };
-
   return {
-    ...wallet,
+    address: wallet.address,
+    chainId: wallet.chainId,
+    isConnected: wallet.isConnected,
+    isConnecting: wallet.isConnecting,
+    error: wallet.error,
     connect,
     disconnect,
-    switchToRonin,
-    switchToSaigon,
   };
 }

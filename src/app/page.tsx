@@ -1,13 +1,11 @@
 'use client';
 
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useWaypoint } from '@/hooks/useWaypoint';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const { address, isConnected } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
-  const { disconnect } = useDisconnect();
+  const { address, isConnected, isConnecting, error, connect, disconnect } = useWaypoint();
 
   useEffect(() => {
     setMounted(true);
@@ -47,18 +45,19 @@ export default function Home() {
                 Connect your Ronin Wallet to start your adventure in Aeloria
               </p>
               
-              <div className="space-y-3">
-                {connectors.map((connector) => (
-                  <button
-                    key={connector.id}
-                    onClick={() => connect({ connector })}
-                    disabled={isPending}
-                    className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold text-xl rounded-lg transition-all duration-200 shadow-lg hover:shadow-purple-500/50"
-                  >
-                    {isPending ? 'Connecting...' : `Connect with ${connector.name}`}
-                  </button>
-                ))}
-              </div>
+              {error && (
+                <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-center">
+                  {error}
+                </div>
+              )}
+              
+              <button
+                onClick={connect}
+                disabled={isConnecting}
+                className="w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold text-xl rounded-lg transition-all duration-200 shadow-lg hover:shadow-purple-500/50"
+              >
+                {isConnecting ? 'Connecting...' : 'Connect with Ronin Waypoint'}
+              </button>
 
               <div className="mt-8 pt-6 border-t border-purple-500/30">
                 <p className="text-gray-400 text-sm text-center mb-4">
