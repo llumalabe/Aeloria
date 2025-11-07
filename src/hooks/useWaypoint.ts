@@ -23,7 +23,7 @@ export function useWaypoint() {
 
   // Initialize Waypoint Provider
   useEffect(() => {
-    const initProvider = () => {
+    const initProvider = async () => {
       if (typeof window === 'undefined') return;
 
       try {
@@ -34,6 +34,19 @@ export function useWaypoint() {
         });
 
         setWaypointProvider(provider);
+
+        // Try to restore session from localStorage
+        const savedAddress = localStorage.getItem('waypoint_address');
+        if (savedAddress) {
+          setWallet({
+            address: savedAddress,
+            chainId: '0x7e4',
+            isConnected: true,
+            isConnecting: false,
+            error: null,
+          });
+          console.log('✅ Session restored:', savedAddress);
+        }
       } catch (error: any) {
         console.error('Failed to initialize Waypoint:', error);
         setWallet(prev => ({
@@ -62,6 +75,9 @@ export function useWaypoint() {
       const result = await waypointProvider.connect();
       
       if (result && result.address) {
+        // Save to localStorage for session persistence
+        localStorage.setItem('waypoint_address', result.address);
+        
         setWallet({
           address: result.address,
           chainId: '0x7e4', // Ronin Mainnet
@@ -69,6 +85,8 @@ export function useWaypoint() {
           isConnecting: false,
           error: null,
         });
+        
+        console.log('✅ Connected:', result.address);
       } else {
         throw new Error('No address returned from authorization');
       }
@@ -87,6 +105,10 @@ export function useWaypoint() {
 
     try {
       waypointProvider.disconnect();
+      
+      // Clear localStorage
+      localStorage.removeItem('waypoint_address');
+      
       setWallet({
         address: null,
         chainId: null,
@@ -94,6 +116,8 @@ export function useWaypoint() {
         isConnecting: false,
         error: null,
       });
+      
+      console.log('✅ Disconnected');
     } catch (error: any) {
       console.error('Failed to disconnect:', error);
     }
