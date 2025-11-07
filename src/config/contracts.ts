@@ -1,22 +1,15 @@
-// Contract addresses on Ronin Saigon Testnet
+﻿// Smart Contract Addresses
 export const CONTRACTS = {
-  AETH_TOKEN: '0x61F434B602C5e561A5Fd2Ad7850B7bB2A91dd797',
-  WALLET_MANAGER: '0xc566e86C2C992aD98071ab66fd8aa2f6993b9a91',
-} as const;
+  survivorNFT: process.env.NEXT_PUBLIC_SURVIVOR_NFT_ADDRESS || '',
+  gameToken: process.env.NEXT_PUBLIC_GAME_TOKEN_ADDRESS || '',
+};
 
-// Ronin Network Configuration
-export const RONIN_TESTNET = {
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+export const NFT_METADATA_BASE_URI = ${API_URL}/api/nft/metadata/;
+
+export const NETWORK = {
   chainId: 2021,
-  chainIdHex: '0x7e5',
-  name: 'Ronin Saigon Testnet',
+  name: 'Saigon Testnet',
   rpcUrl: 'https://saigon-testnet.roninchain.com/rpc',
-  blockExplorer: 'https://saigon-app.roninchain.com',
-} as const;
-
-export const RONIN_MAINNET = {
-  chainId: 2020,
-  chainIdHex: '0x7e4',
-  name: 'Ronin Mainnet',
-  rpcUrl: 'https://api.roninchain.com/rpc',
-  blockExplorer: 'https://app.roninchain.com',
-} as const;
+  explorer: 'https://saigon-app.roninchain.com',
+};

@@ -12,6 +12,7 @@ import guildRoutes from './routes/guild.routes';
 import pvpRoutes from './routes/pvp.routes';
 import gachaRoutes from './routes/gacha.routes';
 import userRoutes from './routes/user.routes';
+import nftRoutes from './routes/nft.routes';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -34,10 +35,11 @@ app.use('/api/guilds', guildRoutes);
 app.use('/api/pvp', pvpRoutes);
 app.use('/api/gacha', gachaRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/nft', nftRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Aeloria API is running' });
+  res.json({ status: 'OK', message: 'Dead Zone API is running' });
 });
 
 // Error handling
